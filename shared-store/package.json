@@ -1,0 +1,23 @@
+{
+  "name": "@shared/store",
+  "version": "1.0.0",
+  "main": "src/index.ts",
+  "types": "dist/index.d.ts",
+  "license": "MIT",
+  "author": {
+    "name": "Sabir Sayyad"
+  },
+
+  "scripts": {
+    "build": "tsc"
+  },
+  "devDependencies": {
+    "typescript": "^3.9.7"
+  },
+  "dependencies": {
+    "rxjs": "^6.5.3",
+    "react-redux": "^7.2.6",
+    "redux": "^5.0.1",
+    "redux-observable": "^3.0.0-rc.2"
+  }
+}
