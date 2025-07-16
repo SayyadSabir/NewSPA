@@ -1,7 +1,7 @@
 {
   "name": "@barclays/mortgage-application",
   "scripts": {
-    "start": "webpack serve --env development",
+    "start": "webpack serve --env standalone",
     "start:standalone": "webpack serve --env standalone",
     "build": "concurrently npm:build:*",
     "build:webpack": "webpack --mode=production",
@@ -64,6 +64,7 @@
     "react-dom": "^17.0.2",
     "react-hook-form": "^7.60.0",
     "react-redux": "^8.0.0",
+    "react-router-dom": "^6.30.1",
     "single-spa": "^5.9.3",
     "single-spa-react": "^4.3.1",
     "uuid": "^11.1.0"

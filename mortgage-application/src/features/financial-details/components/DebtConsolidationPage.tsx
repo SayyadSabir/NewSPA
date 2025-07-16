@@ -27,21 +27,19 @@ import TubeStopStepper from '../../../components/common/TubeStopStepper';
 import { FinancialCommitment } from '../types';
 import { useFinancialCommitments } from '../hooks/useFinancialCommitments';
 import { ArrowBack } from '@mui/icons-material';
-import { useNavigation, FinancialDetailsStep } from '../contexts/NavigationContext';
+// No longer using NavigationContext
 
 interface DebtConsolidationPageProps {
   onBack?: () => void;
+  onSaveAndReturn?: () => void;
 }
 
-const DebtConsolidationPage: React.FC<DebtConsolidationPageProps> = ({ onBack }) => {
-  // Use the navigation context instead of local state for activeStep
-  const { currentStep } = useNavigation();
+const DebtConsolidationPage: React.FC<DebtConsolidationPageProps> = ({ onBack, onSaveAndReturn }) => {
   // For DebtConsolidationPage, we should always use 1 as the activeStep
   // This ensures the stepper shows the second step as active
   const activeStep = 1;
   
-  // Log the current step and activeStep for debugging
-  console.log('DebtConsolidationPage - currentStep:', currentStep);
+  // Log the activeStep for debugging
   console.log('DebtConsolidationPage - activeStep:', activeStep);
   const { 
     commitments, 
@@ -104,9 +102,8 @@ const DebtConsolidationPage: React.FC<DebtConsolidationPageProps> = ({ onBack })
   // Handle saving and returning to overview
   const handleSaveAndReturn = async () => {
     const success = await saveCommitments();
-    if (success) {
-      // Navigate back to overview
-      console.log('Navigate back to overview');
+    if (success && onSaveAndReturn) {
+      onSaveAndReturn();
     }
   };
 

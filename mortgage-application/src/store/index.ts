@@ -1,20 +1,19 @@
 import { configureStore } from '@reduxjs/toolkit';
 import { setupListeners } from '@reduxjs/toolkit/query';
 import financialCommitmentsReducer from '../features/financial-details/slices/financialCommitmentsSlice';
+import errorReducer from '../features/financial-details/slices/errorSlice';
 import { financialDetailsApi } from '../features/financial-details/api/financialDetailsApi';
-import { personalDetailsApi } from '../features/financial-details/api/personalDetailsApi';
 
 // Configure the Redux store
 export const store = configureStore({
   reducer: {
     financialCommitments: financialCommitmentsReducer,
+    error: errorReducer,
     [financialDetailsApi.reducerPath]: financialDetailsApi.reducer,
-    [personalDetailsApi.reducerPath]: personalDetailsApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware()
-      .concat(financialDetailsApi.middleware)
-      .concat(personalDetailsApi.middleware),
+      .concat(financialDetailsApi.middleware),
 });
 
 // Enable refetchOnFocus and refetchOnReconnect

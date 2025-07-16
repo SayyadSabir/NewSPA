@@ -1,9 +1,12 @@
 import React from 'react';
-import { Box, Stepper, Step, StepLabel, styled } from '@mui/material';
+import { Stepper, Step, StepLabel, Box, StepButton } from '@mui/material';
+import { styled } from '@mui/material/styles';
 
-interface TubeStopStepperProps {
+export interface TubeStopStepperProps {
   steps: string[];
   activeStep: number;
+  completed?: { [k: number]: boolean };
+  onStepClick?: (step: number) => void;
 }
 
 // Custom styled components for the tube stop stepper
@@ -24,22 +27,56 @@ const TubeLine = styled('div')(({ theme }) => ({
   flex: 1,
 }));
 
-const TubeStopStepper: React.FC<TubeStopStepperProps> = ({ steps, activeStep }) => {
+const TubeStopStepper: React.FC<TubeStopStepperProps> = ({ 
+  steps, 
+  activeStep, 
+  completed = {}, 
+  onStepClick 
+}) => {
   // Log the activeStep value to help with debugging
   console.log('TubeStopStepper activeStep:', activeStep);
+  console.log('TubeStopStepper completed steps:', completed);
+  
+  // Determine if a step is clickable (only if completed or current)
+  const isStepClickable = (step: number) => {
+    return completed[step] || step === activeStep;
+  };
+  
+  // Handle step click if onStepClick is provided
+  const handleStepClick = (step: number) => {
+    if (onStepClick && isStepClickable(step)) {
+      onStepClick(step);
+    }
+  };
   
   return (
     <Box sx={{ width: '100%', mb: 4 }}>
       <Stepper activeStep={activeStep} alternativeLabel connector={
         <TubeLine />
       }>
-        {steps.map((label, index) => (
-          <Step key={label} completed={index < activeStep}>
-            <StepLabel StepIconComponent={() => <TubeStop>{index + 1}</TubeStop>}>
-              {label}
-            </StepLabel>
-          </Step>
-        ))}
+        {steps.map((label, index) => {
+          // A step is completed if it's in the completed object or if it's before the active step
+          const isCompleted = completed[index] === true;
+          
+          return (
+            <Step key={label} completed={isCompleted}>
+              {onStepClick ? (
+                <StepButton 
+                  onClick={() => handleStepClick(index)}
+                  disabled={!isStepClickable(index)}
+                  optional={null}
+                  icon={<TubeStop>{index + 1}</TubeStop>}
+                >
+                  {label}
+                </StepButton>
+              ) : (
+                <StepLabel StepIconComponent={() => <TubeStop>{index + 1}</TubeStop>}>
+                  {label}
+                </StepLabel>
+              )}
+            </Step>
+          );
+        })}
       </Stepper>
     </Box>
   );

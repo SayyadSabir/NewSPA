@@ -20,20 +20,18 @@ import CommitmentForm from './CommitmentForm';
 import CommitmentsList from './CommitmentsList';
 import { FinancialCommitment } from '../types';
 import { useFinancialCommitments } from '../hooks/useFinancialCommitments';
-import { useNavigation, FinancialDetailsStep } from '../contexts/NavigationContext';
+// No longer using NavigationContext
 
 interface FinancialDetailsPageProps {
   onNext?: () => void;
+  onSaveAndReturn?: () => void;
 }
 
-const FinancialDetailsPage: React.FC<FinancialDetailsPageProps> = ({ onNext }) => {
-  // Use the navigation context instead of local state for activeStep
-  const { currentStep } = useNavigation();
-  // Map the current step from the context to a number for the stepper
-  const activeStep = currentStep === FinancialDetailsStep.FINANCIAL_COMMITMENTS ? 0 : 1;
+const FinancialDetailsPage: React.FC<FinancialDetailsPageProps> = ({ onNext, onSaveAndReturn }) => {
+  // We're on the first step of the stepper
+  const activeStep = 0;
   
-  // Log the current step and activeStep for debugging
-  console.log('FinancialDetailsPage - currentStep:', currentStep);
+  // Log the activeStep for debugging
   console.log('FinancialDetailsPage - activeStep:', activeStep);
   const [hasCommitments, setHasCommitments] = useState<boolean | null>(null);
   const [showForm, setShowForm] = useState(false);
@@ -103,15 +101,15 @@ const FinancialDetailsPage: React.FC<FinancialDetailsPageProps> = ({ onNext }) =
     // If no changes, return without API call
     if (!formModified) {
       // Navigate back to overview without saving
-      console.log('Navigate back to overview - no changes to save');
+      if (onSaveAndReturn) {
+        onSaveAndReturn();
+      }
       return;
     }
     
     const success = await saveCommitments();
-    if (success) {
-      // Navigate back to overview
-      // This would be handled by your routing system
-      console.log('Navigate back to overview');
+    if (success && onSaveAndReturn) {
+      onSaveAndReturn();
     }
   };
 

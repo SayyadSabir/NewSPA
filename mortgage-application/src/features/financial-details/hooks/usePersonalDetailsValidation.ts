@@ -1,13 +1,18 @@
 import { useState, useEffect } from 'react';
-import { useGetPersonalDetailsQuery } from '../api/personalDetailsApi';
+import { useGetFinancialCommitmentsQuery, FinancialCommitmentsResponse } from '../api/financialDetailsApi';
+import { getApplicationId, isResumeCase } from '../utils/applicationStorage';
 
 export function usePersonalDetailsValidation() {
-  const { data: personalDetails, isLoading } = useGetPersonalDetailsQuery();
+  const applicationId = isResumeCase() ? getApplicationId() : undefined;
+  // Cast the response to FinancialCommitmentsResponse to access dateOfBirth
+  const { data, isLoading } = useGetFinancialCommitmentsQuery({ applicationId });
+  const response = data as unknown as FinancialCommitmentsResponse;
   const [maxRetirementAge, setMaxRetirementAge] = useState<number | null>(null);
   
   useEffect(() => {
-    if (personalDetails?.dateOfBirth) {
-      const dob = new Date(personalDetails.dateOfBirth);
+    // dateOfBirth is now included in the response object, not in the data array
+    if (response?.dateOfBirth) {
+      const dob = new Date(response.dateOfBirth);
       const currentYear = new Date().getFullYear();
       const birthYear = dob.getFullYear();
       const age = currentYear - birthYear;
@@ -16,7 +21,7 @@ export function usePersonalDetailsValidation() {
       const calculatedMaxRetirementAge = 100 - age;
       setMaxRetirementAge(calculatedMaxRetirementAge);
     }
-  }, [personalDetails]);
+  }, [response]);
   
   // Validation function to be used in form rules
   const validateRetirementAge = (value: number) => {
@@ -27,7 +32,7 @@ export function usePersonalDetailsValidation() {
   return {
     validateRetirementAge,
     isLoading,
-    personalDetails,
+    dateOfBirth: response?.dateOfBirth,
     maxRetirementAge
   };
 }

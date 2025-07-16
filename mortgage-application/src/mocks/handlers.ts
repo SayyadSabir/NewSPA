@@ -1,13 +1,13 @@
 import { http, HttpResponse, delay } from 'msw';
 import { v4 as uuidv4 } from 'uuid';
 import { FinancialCommitment } from '../features/financial-details/types';
-import { PersonalDetails } from '../features/financial-details/api/personalDetailsApi';
+import { financialDetailsHandlers } from './handlers/financialDetailsHandlers';
 
 // In-memory mock database
 let financialCommitments: FinancialCommitment[] = [];
 
-// Mock personal details data
-const mockPersonalDetails: PersonalDetails = {
+// Mock personal details data - no longer using PersonalDetails type
+const mockPersonalDetails = {
   firstName: 'John',
   lastName: 'Doe',
   dateOfBirth: '1980-05-15', // This would make the person around 45 years old
@@ -15,7 +15,8 @@ const mockPersonalDetails: PersonalDetails = {
   phone: '555-123-4567'
 };
 
-export const handlers = [
+// Legacy handlers - these will be deprecated in favor of the more specific handlers
+const legacyHandlers = [
   // Get all financial commitments
   http.get('/api/financial-commitments', async () => {
     await delay(500);
@@ -96,8 +97,11 @@ export const handlers = [
   }),
 
   // Get personal details
-  http.get('/api/personal-details', async () => {
-    await delay(300); // Simulate network delay
-    return HttpResponse.json(mockPersonalDetails);
-  }),
+  // Personal details API endpoint removed - dateOfBirth now included in financial commitments response
+];
+
+// Combine all handlers
+export const handlers = [
+  ...financialDetailsHandlers,
+  ...legacyHandlers
 ];
