@@ -33,6 +33,12 @@ export interface FinancialCommitment {
   repaymentAmount?: number;
   notes?: string;
   includeInMortgage?: boolean;
+  retirementAge?: number;
+  termRemainingMonths?: number;
+  termRemainingYears?: number;
+  willMortgageRepayThis?: boolean;
+  bulletPaymentAmount?: number;
+  hasBulletPayment?: boolean;
 }
 
 export interface FinancialCommitmentsState {

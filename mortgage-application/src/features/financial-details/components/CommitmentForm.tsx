@@ -1,15 +1,20 @@
 import React, { useEffect } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import {
   Box,
   Button,
+  Card,
+  CardContent,
   Typography,
   Paper,
   Grid,
+  TextField,
+  FormControlLabel,
+  Checkbox
 } from '@mui/material';
 import { FinancialCommitment, CommitmentType, CompletionStatus } from '../types';
 // Import our new modular components and configuration
-import { getFieldConfig, shouldShowField } from './form-fields/CommitmentFieldConfig';
+import { getFieldConfig, shouldShowField, FieldName } from './form-fields/CommitmentFieldConfig';
 import {
   TypeSelector,
   BalanceField,
@@ -55,27 +60,55 @@ const CommitmentForm: React.FC<CommitmentFormProps> = ({
   // Watch for changes in type and completion status to dynamically update the form
   const selectedType = watch('type') as CommitmentType;
   const completionStatus = watch('completionStatus') as CompletionStatus;
+  const monthlyPayment = watch('monthlyPayment');
+  const balance = watch('balance');
+  const hasBulletPayment = watch('hasBulletPayment');
+  const formValuesForConditionals = React.useMemo(() => ({
+    type: selectedType,
+    completionStatus,
+    monthlyPayment,
+    balance,
+    hasBulletPayment,
+  }), [selectedType, completionStatus, monthlyPayment, balance, hasBulletPayment]);
   
   // Get the field configuration based on the selected type and completion status
-  const fieldConfig = getFieldConfig(selectedType, completionStatus);
+  const fieldConfig = React.useMemo(() => {
+    return getFieldConfig(selectedType, completionStatus, formValuesForConditionals);
+  }, [selectedType, completionStatus, formValuesForConditionals]);
   
   // Reset fields that are no longer applicable when type or completion status changes
   useEffect(() => {
-    // If balance field is hidden, reset its value
-    if (!fieldConfig.showBalance) {
-      setValue('balance', 0);
-    }
+    // Define all field names to check
+    const fieldNames: FieldName[] = [
+      'balance',
+      'monthlyPayment',
+      'repaymentAmount',
+      'notes',
+      'includeInMortgage',
+      'retirementAge',
+      'termRemainingMonths',
+      'termRemainingYears',
+      'willMortgageRepayThis'
+    ];
     
-    // If monthly payment field is hidden, reset its value
-    if (!fieldConfig.showMonthlyPayment) {
-      setValue('monthlyPayment', undefined);
-    }
-    
-    // If repayment amount field is hidden, reset its value
-    if (!fieldConfig.showRepaymentAmount) {
-      setValue('repaymentAmount', undefined);
-    }
-  }, [selectedType, completionStatus, fieldConfig, setValue]);
+    // For each field, check if it should be shown
+    fieldNames.forEach(fieldName => {
+      // If field should not be shown, reset its value
+      if (!shouldShowField(fieldName, fieldConfig, formValuesForConditionals)) {
+        if (fieldName === 'balance') {
+          setValue('balance', 0);
+        } else if (fieldName === 'includeInMortgage') {
+          setValue('includeInMortgage', false);
+        } else if (fieldName === 'retirementAge') {
+          setValue('retirementAge', 65);
+        } else if (fieldName === 'notes') {
+          setValue('notes', '');
+        } else {
+          setValue(fieldName, undefined);
+        }
+      }
+    });
+  }, [selectedType, completionStatus, fieldConfig, setValue, formValuesForConditionals]);
 
   const onSubmit = (data: any) => {
     if (isEditing && onUpdateCommitment) {
@@ -99,12 +132,12 @@ const CommitmentForm: React.FC<CommitmentFormProps> = ({
           <TypeSelector control={control} errors={errors} fieldConfig={fieldConfig} />
 
           {/* Balance field - conditionally shown */}
-          {shouldShowField('showBalance', fieldConfig) && (
+          {shouldShowField('balance', fieldConfig, formValuesForConditionals) && (
             <BalanceField control={control} errors={errors} fieldConfig={fieldConfig} />
           )}
 
           {/* Monthly payment field - conditionally shown */}
-          {shouldShowField('showMonthlyPayment', fieldConfig) && (
+          {shouldShowField('monthlyPayment', fieldConfig, formValuesForConditionals) && (
             <MonthlyPaymentField control={control} errors={errors} fieldConfig={fieldConfig} />
           )}
 
@@ -112,20 +145,126 @@ const CommitmentForm: React.FC<CommitmentFormProps> = ({
           <CompletionStatusSelector control={control} errors={errors} fieldConfig={fieldConfig} />
 
           {/* Repayment amount field - conditionally shown */}
-          {shouldShowField('showRepaymentAmount', fieldConfig) && (
+          {shouldShowField('repaymentAmount', fieldConfig, formValuesForConditionals) && (
             <RepaymentAmountField control={control} errors={errors} fieldConfig={fieldConfig} />
           )}
 
           {/* Notes field - conditionally shown */}
-          {shouldShowField('showAdditionalNotes', fieldConfig) && (
+          {shouldShowField('notes', fieldConfig, formValuesForConditionals) && (
             <NotesField control={control} errors={errors} fieldConfig={fieldConfig} />
           )}
 
-          {/* Include in mortgage field - always shown */}
-          <IncludeInMortgageField control={control} errors={errors} fieldConfig={fieldConfig} />
+          {/* Include in mortgage field - conditionally shown */}
+          {shouldShowField('includeInMortgage', fieldConfig, formValuesForConditionals) && (
+            <IncludeInMortgageField control={control} errors={errors} fieldConfig={fieldConfig} />
+          )}
           
-          {/* Retirement age field - always shown */}
-          <RetirementAgeField control={control} errors={errors} />
+          {/* Term remaining fields - conditionally shown */}
+          {shouldShowField('termRemainingMonths', fieldConfig, formValuesForConditionals) && (
+            <Grid item xs={12} md={6}>
+              <Controller
+                name="termRemainingMonths"
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    label={fieldConfig.labels.termRemainingMonths}
+                    type="number"
+                    fullWidth
+                    error={!!errors.termRemainingMonths}
+                    helperText={errors.termRemainingMonths?.message?.toString()}
+                  />
+                )}
+              />
+            </Grid>
+          )}
+
+          {shouldShowField('termRemainingYears', fieldConfig, formValuesForConditionals) && (
+            <Grid item xs={12} md={6}>
+              <Controller
+                name="termRemainingYears"
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    label={fieldConfig.labels.termRemainingYears}
+                    type="number"
+                    fullWidth
+                    error={!!errors.termRemainingYears}
+                    helperText={errors.termRemainingYears?.message?.toString()}
+                  />
+                )}
+              />
+            </Grid>
+          )}
+
+          {/* Has Bullet Payment field - conditionally shown for hire_purchase */}
+          {shouldShowField('hasBulletPayment', fieldConfig, formValuesForConditionals) && (
+            <Grid item xs={12}>
+              <Controller
+                name="hasBulletPayment"
+                control={control}
+                render={({ field: { onChange, value, ...field } }) => (
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={!!value}
+                        onChange={(e) => onChange(e.target.checked)}
+                        {...field}
+                      />
+                    }
+                    label={fieldConfig.labels.hasBulletPayment}
+                  />
+                )}
+              />
+            </Grid>
+          )}
+
+          {/* Bullet Payment Amount field - conditionally shown based on hasBulletPayment */}
+          {shouldShowField('bulletPaymentAmount', fieldConfig, formValuesForConditionals) && (
+            <Grid item xs={12} md={6}>
+              <Controller
+                name="bulletPaymentAmount"
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    label={fieldConfig.labels.bulletPaymentAmount}
+                    type="number"
+                    fullWidth
+                    error={!!errors.bulletPaymentAmount}
+                    helperText={errors.bulletPaymentAmount?.message?.toString()}
+                  />
+                )}
+              />
+            </Grid>
+          )}
+
+          {/* Will mortgage repay this - conditionally shown */}
+          {shouldShowField('willMortgageRepayThis', fieldConfig, formValuesForConditionals) && (
+            <Grid item xs={12}>
+              <Controller
+                name="willMortgageRepayThis"
+                control={control}
+                render={({ field }) => (
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={field.value}
+                        onChange={(e) => field.onChange(e.target.checked)}
+                      />
+                    }
+                    label={fieldConfig.labels.willMortgageRepayThis}
+                  />
+                )}
+              />
+            </Grid>
+          )}
+          
+          {/* Retirement age field - conditionally shown */}
+          {shouldShowField('retirementAge', fieldConfig, formValuesForConditionals) && (
+            <RetirementAgeField control={control} errors={errors} />
+          )}
         </Grid>
 
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 3 }}>

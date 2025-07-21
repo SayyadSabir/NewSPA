@@ -14,7 +14,7 @@ import {
 } from '@mui/material';
 import { CommitmentType, CompletionStatus } from '../../types';
 
-import { FieldConfig } from './CommitmentFieldConfig';
+import { FieldConfig, FieldName } from './CommitmentFieldConfig';
 import { RetirementAgeField } from './RetirementAgeField';
 
 // Define options inline since the import is causing issues
@@ -94,7 +94,7 @@ export const BalanceField: React.FC<FormFieldProps> = ({ control, errors, fieldC
         render={({ field }) => (
           <TextField
             {...field}
-            label={fieldConfig.balanceLabel || 'Balance (£)'}
+            label={fieldConfig.labels.balance || 'Balance (£)'}
             type="number"
             fullWidth
             InputProps={{
@@ -122,7 +122,7 @@ export const MonthlyPaymentField: React.FC<FormFieldProps> = ({ control, errors,
         render={({ field }) => (
           <TextField
             {...field}
-            label={fieldConfig.monthlyPaymentLabel || 'Monthly payment (£)'}
+            label={fieldConfig.labels.monthlyPayment || 'Monthly payment (£)'}
             type="number"
             fullWidth
             InputProps={{
@@ -186,7 +186,7 @@ export const RepaymentAmountField: React.FC<FormFieldProps> = ({ control, errors
         render={({ field }) => (
           <TextField
             {...field}
-            label={fieldConfig.repaymentAmountLabel || 'Repayment amount (£)'}
+            label={fieldConfig.labels.repaymentAmount || 'Repayment amount (£)'}
             type="number"
             fullWidth
             InputProps={{
@@ -211,7 +211,7 @@ export const NotesField: React.FC<FormFieldProps> = ({ control, errors, fieldCon
         render={({ field }) => (
           <TextField
             {...field}
-            label={fieldConfig.notesLabel || 'Additional notes'}
+            label={fieldConfig.labels.notes || 'Additional notes'}
             multiline
             rows={2}
             fullWidth
