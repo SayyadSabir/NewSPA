@@ -7,6 +7,15 @@ import { store } from './store';
 import FinancialDetailsContainer from './features/financial-details/components/FinancialDetailsContainer';
 import ErrorDisplay from './features/financial-details/components/ErrorDisplay';
 
+// Import test navigation components
+import TestNavigation from './components/TestNavigation';
+import Page1 from './components/Page1';
+import Page2 from './components/Page2';
+import Page3 from './components/Page3';
+
+// Import navigation control
+import { clearBrowserHistory, disableBrowserBack } from './utils/navigationControl';
+
 // Import the MSW initialization function
 import { startMsw } from './mocks/index';
 
@@ -20,6 +29,15 @@ const MortgageApplication: React.FC = () => {
     startMsw().then(() => {
       setIsMswInitialized(true);
     });
+    
+    // Clear browser history when the application loads
+    clearBrowserHistory();
+    
+    // Disable browser back button globally from the start
+    const cleanup = disableBrowserBack();
+    
+    // Clean up when component unmounts
+    return cleanup;
   }, []);
 
   if (!isMswInitialized) {
@@ -37,10 +55,16 @@ const MortgageApplication: React.FC = () => {
       <BrowserRouter>
         {/* Error display component will show errors from anywhere in the app */}
         <ErrorDisplay />
+        <TestNavigation />
         <Routes>
           {/* Mount financial details on the specific route */}
-          <Route path="/secure/launch/financialdetails/*" element={<FinancialDetailsContainer />} />          
-   
+          <Route path="/secure/launch/financialdetails/*" element={<FinancialDetailsContainer />} />
+          
+          {/* Test navigation routes */}
+          <Route path="/test/page1" element={<Page1 />} />
+          <Route path="/test/page2" element={<Page2 />} />
+          <Route path="/test/page3" element={<Page3 />} />
+          <Route path="/test" element={<Navigate to="/test/page1" replace />} />
         </Routes>
       </BrowserRouter>
     </Provider>
