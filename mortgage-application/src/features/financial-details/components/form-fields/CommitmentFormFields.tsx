@@ -1,10 +1,11 @@
 import React from 'react';
-import { Control, Controller, FieldErrors } from 'react-hook-form';
+import { useForm, Controller, UseFormRegister, UseFormWatch, UseFormSetValue, FieldErrors } from 'react-hook-form';
 import {
   FormControl,
   FormLabel,
   RadioGroup,
   Radio,
+  Checkbox,
   FormControlLabel,
   TextField,
   MenuItem,
@@ -44,204 +45,192 @@ const completionStatusOptions: { value: CompletionStatus; label: string }[] = [
   { value: 'nothing', label: 'Nothing' },
 ];
 
+// Common props for form field components
 interface FormFieldProps {
-  control: Control<any>;
-  errors: FieldErrors;
-  fieldConfig: FieldConfig;
+  register: UseFormRegister<any>;
+  watch?: UseFormWatch<any>;
+  errors?: FieldErrors;
+  fieldConfig?: FieldConfig;
+  setValue?: UseFormSetValue<any>;
 }
 
 // Type selector component
-export const TypeSelector: React.FC<FormFieldProps> = ({ control, errors }) => {
+export const TypeSelector: React.FC<FormFieldProps> = ({ register, watch, errors, setValue }) => {
+  const selectedType = watch ? watch('type') : '';
+  
+  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setValue && setValue('type', event.target.value);
+  };
+  
   return (
     <Grid item xs={12}>
-      <Controller
-        name="type"
-        control={control}
-        rules={{ required: 'Type is required' }}
-        render={({ field }) => (
-          <FormControl fullWidth error={!!errors.type}>
-            <FormLabel>Select the type of commitment</FormLabel>
-            <TextField
-              {...field}
-              select
-              error={!!errors.type}
-              helperText={errors.type?.message?.toString()}
-            >
-              {commitmentTypeOptions.map((option) => (
-                <MenuItem key={option.value} value={option.value}>
-                  {option.label}
-                </MenuItem>
-              ))}
-            </TextField>
-          </FormControl>
-        )}
-      />
+      <FormControl fullWidth error={!!errors?.type}>
+        <FormLabel>Select the type of commitment</FormLabel>
+        <TextField
+          select
+          value={selectedType || ''}
+          onChange={handleChange}
+          error={!!errors?.type}
+          helperText={errors?.type?.message?.toString()}
+        >
+          {commitmentTypeOptions.map((option) => (
+            <MenuItem key={option.value} value={option.value}>
+              {option.label}
+            </MenuItem>
+          ))}
+        </TextField>
+        <input 
+          type="hidden" 
+          {...register("type", { required: 'Type is required' })}
+          value={selectedType || ''}
+        />
+      </FormControl>
     </Grid>
   );
 };
 
 // Balance field component
-export const BalanceField: React.FC<FormFieldProps> = ({ control, errors, fieldConfig }) => {
+export const BalanceField: React.FC<FormFieldProps> = ({ register, errors, fieldConfig }) => {
   return (
     <Grid item xs={12} md={6}>
-      <Controller
-        name="balance"
-        control={control}
-        rules={{ 
+      <TextField
+        {...register("balance", { 
           required: 'Balance is required',
           min: { value: 0, message: 'Balance must be at least 0' }
+        })}
+        label={fieldConfig.labels.balance || 'Balance (£)'}
+        type="number"
+        fullWidth
+        InputProps={{
+          startAdornment: <InputAdornment position="start">£</InputAdornment>,
         }}
-        render={({ field }) => (
-          <TextField
-            {...field}
-            label={fieldConfig.labels.balance || 'Balance (£)'}
-            type="number"
-            fullWidth
-            InputProps={{
-              startAdornment: <InputAdornment position="start">£</InputAdornment>,
-            }}
-            error={!!errors.balance}
-            helperText={errors.balance?.message?.toString()}
-          />
-        )}
+        error={!!errors.balance}
+        helperText={errors.balance?.message?.toString()}
       />
     </Grid>
   );
 };
 
 // Monthly payment field component
-export const MonthlyPaymentField: React.FC<FormFieldProps> = ({ control, errors, fieldConfig }) => {
+export const MonthlyPaymentField: React.FC<FormFieldProps> = ({ register, errors, fieldConfig }) => {
   return (
     <Grid item xs={12} md={6}>
-      <Controller
-        name="monthlyPayment"
-        control={control}
-        rules={{ 
+      <TextField
+        {...register("monthlyPayment", { 
           min: { value: 0, message: 'Monthly payment must be at least 0' }
+        })}
+        label={fieldConfig.labels.monthlyPayment || 'Monthly payment (£)'}
+        type="number"
+        fullWidth
+        InputProps={{
+          startAdornment: <InputAdornment position="start">£</InputAdornment>,
         }}
-        render={({ field }) => (
-          <TextField
-            {...field}
-            label={fieldConfig.labels.monthlyPayment || 'Monthly payment (£)'}
-            type="number"
-            fullWidth
-            InputProps={{
-              startAdornment: <InputAdornment position="start">£</InputAdornment>,
-            }}
-            error={!!errors.monthlyPayment}
-            helperText={errors.monthlyPayment?.message?.toString()}
-          />
-        )}
+        error={!!errors.monthlyPayment}
+        helperText={errors.monthlyPayment?.message?.toString()}
       />
     </Grid>
   );
 };
 
 // Completion status selector component
-export const CompletionStatusSelector: React.FC<FormFieldProps> = ({ control, errors }) => {
+export const CompletionStatusSelector: React.FC<FormFieldProps> = ({ register, watch, errors, setValue }) => {
+  const completionStatus = watch ? watch('completionStatus') : '';
+  
+  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setValue && setValue('completionStatus', event.target.value);
+  };
+  
   return (
     <Grid item xs={12}>
-      <Controller
-        name="completionStatus"
-        control={control}
-        rules={{ required: 'Please select what will happen to this commitment' }}
-        render={({ field }) => (
-          <FormControl component="fieldset" error={!!errors.completionStatus}>
-            <FormLabel component="legend">
-              What will happen to this commitment by the time this mortgage completes?
-            </FormLabel>
-            <RadioGroup {...field} row>
-              {completionStatusOptions.map((option) => (
-                <FormControlLabel
-                  key={option.value}
-                  value={option.value}
-                  control={<Radio />}
-                  label={option.label}
-                />
-              ))}
-            </RadioGroup>
-            {errors.completionStatus && (
-              <FormHelperText error>
-                {errors.completionStatus.message?.toString()}
-              </FormHelperText>
-            )}
-          </FormControl>
+      <FormControl component="fieldset" error={!!errors?.completionStatus}>
+        <FormLabel component="legend">
+          What will happen to this commitment by the time this mortgage completes?
+        </FormLabel>
+        <RadioGroup 
+          value={completionStatus} 
+          onChange={handleChange}
+          row
+        >
+          {completionStatusOptions.map((option) => (
+            <FormControlLabel
+              key={option.value}
+              value={option.value}
+              control={<Radio />}
+              label={option.label}
+            />
+          ))}
+        </RadioGroup>
+        <input 
+          type="hidden" 
+          {...register("completionStatus", { 
+            required: 'Please select what will happen to this commitment' 
+          })} 
+          value={completionStatus || ''}
+        />
+        {errors?.completionStatus && (
+          <FormHelperText error>
+            {errors.completionStatus.message?.toString()}
+          </FormHelperText>
         )}
-      />
+      </FormControl>
     </Grid>
   );
 };
 
 // Repayment amount field component
-export const RepaymentAmountField: React.FC<FormFieldProps> = ({ control, errors, fieldConfig }) => {
+export const RepaymentAmountField: React.FC<FormFieldProps> = ({ register, errors, fieldConfig }) => {
   return (
     <Grid item xs={12} md={6}>
-      <Controller
-        name="repaymentAmount"
-        control={control}
-        rules={{ 
+      <TextField
+        {...register("repaymentAmount", { 
           required: 'Repayment amount is required',
           min: { value: 0, message: 'Repayment amount must be at least 0' }
+        })}
+        label={fieldConfig.labels.repaymentAmount || 'Repayment amount (£)'}
+        type="number"
+        fullWidth
+        InputProps={{
+          startAdornment: <InputAdornment position="start">£</InputAdornment>,
         }}
-        render={({ field }) => (
-          <TextField
-            {...field}
-            label={fieldConfig.labels.repaymentAmount || 'Repayment amount (£)'}
-            type="number"
-            fullWidth
-            InputProps={{
-              startAdornment: <InputAdornment position="start">£</InputAdornment>,
-            }}
-            error={!!errors.repaymentAmount}
-            helperText={errors.repaymentAmount?.message?.toString()}
-          />
-        )}
+        error={!!errors.repaymentAmount}
+        helperText={errors.repaymentAmount?.message?.toString()}
       />
     </Grid>
   );
 };
 
 // Notes field component
-export const NotesField: React.FC<FormFieldProps> = ({ control, errors, fieldConfig }) => {
+export const NotesField: React.FC<FormFieldProps> = ({ register, errors, fieldConfig }) => {
   return (
     <Grid item xs={12}>
-      <Controller
-        name="notes"
-        control={control}
-        render={({ field }) => (
-          <TextField
-            {...field}
-            label={fieldConfig.labels.notes || 'Additional notes'}
-            multiline
-            rows={2}
-            fullWidth
-            error={!!errors.notes}
-            helperText={errors.notes?.message?.toString()}
-          />
-        )}
+      <TextField
+        {...register("notes")}
+        label={fieldConfig.labels.notes || 'Additional notes'}
+        multiline
+        rows={2}
+        fullWidth
+        error={!!errors.notes}
+        helperText={errors.notes?.message?.toString()}
       />
     </Grid>
   );
 };
 
 // Include in mortgage checkbox
-export const IncludeInMortgageField: React.FC<FormFieldProps> = ({ control }) => {
+export const IncludeInMortgageField: React.FC<FormFieldProps> = ({ register, watch, errors, fieldConfig }) => {
+  const includeInMortgage = watch ? watch('includeInMortgage') : false;
+  
   return (
     <Grid item xs={12}>
-      <Controller
-        name="includeInMortgage"
-        control={control}
-        render={({ field }) => (
-          <FormControlLabel
-            control={
-              <Radio
-                checked={field.value === true}
-                onChange={(e) => field.onChange(e.target.checked)}
-              />
-            }
-            label="Include this commitment in the mortgage"
+      <FormControlLabel
+        control={
+          <Checkbox
+            {...register("includeInMortgage")}
+            checked={!!includeInMortgage}
+            color="primary"
           />
-        )}
+        }
+        label={fieldConfig.labels.includeInMortgage || "Include this commitment in the mortgage"}
       />
     </Grid>
   );

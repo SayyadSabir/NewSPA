@@ -1,5 +1,5 @@
 import React from 'react';
-import { Control, Controller, FieldErrors } from 'react-hook-form';
+import { UseFormRegister, UseFormWatch, FieldErrors } from 'react-hook-form';
 import {
   TextField,
   Grid,
@@ -12,52 +12,44 @@ import { usePersonalDetailsValidation } from '../../hooks/usePersonalDetailsVali
 import { FieldConfig } from './CommitmentFieldConfig';
 
 interface RetirementAgeFieldProps {
-  control: Control<any>;
+  register: UseFormRegister<any>;
+  watch?: UseFormWatch<any>;
   errors: FieldErrors;
   fieldConfig?: FieldConfig;
 }
 
-export const RetirementAgeField: React.FC<RetirementAgeFieldProps> = ({ control, errors }) => {
+export const RetirementAgeField: React.FC<RetirementAgeFieldProps> = ({ register, errors }) => {
   const { validateRetirementAge, isLoading, maxRetirementAge } = usePersonalDetailsValidation();
 
   return (
     <Grid item xs={12} md={6}>
-      <Controller
-        name="retirementAge"
-        control={control}
-        rules={{
+      <TextField
+        {...register("retirementAge", {
           required: 'Retirement age is required',
           min: { value: 55, message: 'Retirement age must be at least 55' },
           validate: validateRetirementAge
+        })}
+        label="Retirement Age"
+        type="number"
+        fullWidth
+        error={!!errors.retirementAge}
+        helperText={errors.retirementAge?.message?.toString()}
+        disabled={isLoading}
+        InputProps={{
+          endAdornment: isLoading ? (
+            <CircularProgress size={20} />
+          ) : null,
         }}
-        render={({ field }) => (
-          <>
-            <TextField
-              {...field}
-              label="Retirement Age"
-              type="number"
-              fullWidth
-              error={!!errors.retirementAge}
-              helperText={errors.retirementAge?.message?.toString()}
-              disabled={isLoading}
-              InputProps={{
-                endAdornment: isLoading ? (
-                  <CircularProgress size={20} />
-                ) : null,
-              }}
-            />
-            {maxRetirementAge !== null && !errors.retirementAge && (
-              <FormHelperText>
-                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                  <Typography variant="caption" color="textSecondary">
-                    Maximum retirement age based on your date of birth: {maxRetirementAge}
-                  </Typography>
-                </Box>
-              </FormHelperText>
-            )}
-          </>
-        )}
       />
+      {maxRetirementAge !== null && !errors.retirementAge && (
+        <FormHelperText>
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <Typography variant="caption" color="textSecondary">
+              Maximum retirement age based on your date of birth: {maxRetirementAge}
+            </Typography>
+          </Box>
+        </FormHelperText>
+      )}
     </Grid>
   );
 };
