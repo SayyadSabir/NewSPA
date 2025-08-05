@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { DevTool } from '@hookform/devtools';
 import { useForm } from 'react-hook-form';
 import {
   Box,
@@ -44,7 +45,7 @@ const CommitmentForm: React.FC<CommitmentFormProps> = ({
   // Define the form values type based on whether we're editing or creating
   type FormValues = Omit<FinancialCommitment, 'id'> & { id?: string };
   
-  const { register, handleSubmit, watch, formState: { errors }, setValue, reset } = useForm<any>({
+  const { register, handleSubmit, watch, formState: { errors }, setValue, reset, control, getValues } = useForm<any>({
     defaultValues: existingCommitment || {
       type: '',
       balance: 0,
@@ -140,7 +141,7 @@ const CommitmentForm: React.FC<CommitmentFormProps> = ({
 
           {/* Balance field - conditionally shown */}
           {shouldShowField('balance', fieldConfig, formValuesForConditionals) && (
-            <BalanceField register={register} errors={errors} fieldConfig={fieldConfig} />
+            <BalanceField register={register} getValues={getValues} errors={errors} fieldConfig={fieldConfig} />
           )}
 
           {/* Monthly payment field - conditionally shown */}
@@ -256,6 +257,8 @@ const CommitmentForm: React.FC<CommitmentFormProps> = ({
             {isEditing ? 'Update' : 'Add'}
           </Button>
         </Box>
+        
+        {process.env.NODE_ENV === 'development' && <DevTool control={control} />}
       </form>
     </Paper>
   );

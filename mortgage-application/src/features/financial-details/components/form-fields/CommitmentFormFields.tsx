@@ -1,5 +1,5 @@
 import React from 'react';
-import { useForm, Controller, UseFormRegister, UseFormWatch, UseFormSetValue, FieldErrors } from 'react-hook-form';
+import { useForm, Controller, UseFormRegister, UseFormWatch, UseFormSetValue, UseFormGetValues, FieldErrors } from 'react-hook-form';
 import {
   FormControl,
   FormLabel,
@@ -52,6 +52,7 @@ interface FormFieldProps {
   errors?: FieldErrors;
   fieldConfig?: FieldConfig;
   setValue?: UseFormSetValue<any>;
+  getValues?: UseFormGetValues<any>;
 }
 
 // Type selector component
@@ -90,7 +91,21 @@ export const TypeSelector: React.FC<FormFieldProps> = ({ register, watch, errors
 };
 
 // Balance field component
-export const BalanceField: React.FC<FormFieldProps> = ({ register, errors, fieldConfig }) => {
+export const BalanceField: React.FC<FormFieldProps> = ({ register, errors, fieldConfig, getValues }) => {
+  const selectedType = getValues ? getValues('type') : '';
+  // Determine if we need to show extra text based on commitment type
+  const getHelperText = () => {
+    if (errors.balance?.message) {
+      return errors.balance.message.toString();
+    }
+    
+    if (selectedType === 'hire_purchase') {
+      return 'For hire purchase, include the total outstanding balance including any final payment.';
+    }
+    
+    return '';
+  };
+
   return (
     <Grid item xs={12} md={6}>
       <TextField
@@ -105,7 +120,7 @@ export const BalanceField: React.FC<FormFieldProps> = ({ register, errors, field
           startAdornment: <InputAdornment position="start">£</InputAdornment>,
         }}
         error={!!errors.balance}
-        helperText={errors.balance?.message?.toString()}
+        helperText={getHelperText()}
       />
     </Grid>
   );
