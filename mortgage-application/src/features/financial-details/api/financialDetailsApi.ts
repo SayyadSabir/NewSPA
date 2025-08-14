@@ -3,7 +3,8 @@ import { FinancialCommitment } from '../types';
 import { setError, clearError } from '../slices/errorSlice';
 import { RootState } from '../../../store';
 import { getApplicationId } from '../utils/applicationStorage';
-import { transformCommitmentFormDataToApi } from '../utils/commitmentDataTransformer';
+import { transformCommitmentFormDataToApi, transformApiDataToForm, ApiCommitmentData } from '../utils/commitmentDataTransformer';
+import { v4 as generateId } from 'uuid';
 
 // Default applicant details - in a real app, this would come from user context/state
 const DEFAULT_APPLICANT_DETAILS = {
@@ -18,7 +19,7 @@ export interface ApplicationParams {
 
 export interface FinancialCommitmentsResponse {
   success: boolean;
-  data: FinancialCommitment[];
+  data: ApiCommitmentData[]; // Raw API data in kebab-case format
   applicationId?: string;
   dateOfBirth?: string; // ISO format date string
 }
@@ -38,7 +39,13 @@ export const financialDetailsApi = createApi({
       query: (params) => params.applicationId 
         ? `/overviewxapi/financial-commitments?applicationId=${params.applicationId}` 
         : '/overviewxapi/financial-commitments',
-      transformResponse: (response: FinancialCommitmentsResponse) => response.data,
+      transformResponse: (response: FinancialCommitmentsResponse) => {
+        // Transform API data (kebab-case) to form format (camelCase) for each commitment
+        return response.data.map(apiCommitment => ({
+          ...transformApiDataToForm(apiCommitment),
+          id: apiCommitment.id || generateId() // Ensure we have an ID
+        })) as FinancialCommitment[];
+      },
       providesTags: ['FinancialCommitments'],
     }),
     

@@ -14,6 +14,7 @@ export interface TermRemaining {
 }
 
 export interface ApiCommitmentData {
+  id?: string; // Commitment ID
   'applicant-details': {
     'applicant-id': string;
     'applicant-name': string;
@@ -31,7 +32,65 @@ export interface ApiCommitmentData {
   'retirement-age'?: number;
   'term-remaining'?: TermRemaining;
   'has-bullet-payment'?: boolean;
+  'completion-status'?: string;
 }
+
+/**
+ * Maps API commitment type values (human readable) to form enum values
+ */
+const COMMITMENT_TYPE_MAPPING: Record<string, string> = {
+  // API value -> Form value
+  'Personal Loan': 'personal_loan',
+  'Credit Card': 'credit_card',
+  'Store Card': 'store_card',
+  'Hire Purchase': 'hire_purchase',
+  'HP': 'hire_purchase',
+  'PCP': 'hire_purchase',
+  'Student Loan': 'student_loan',
+  'Maintenance': 'maintenance',
+  'Child Maintenance': 'maintenance',
+  'Overdraft': 'overdraft',
+  'Buy Now Pay Later': 'buy_now_pay_later',
+  'Catalogue Instalments': 'catalogue_instalments',
+  'Childcare Fees': 'childcare_fees',
+  'School Fees': 'childcare_fees',
+  'Credit Agreement': 'credit_agreement',
+  'Guarantor Existing Borrowing': 'guarantor_existing_borrowing',
+  'Guarantor Rental Agreement': 'guarantor_rental_agreement',
+  'Secured Personal Loan': 'secured_personal_loan',
+  'Shared Equity Loan': 'shared_equity_loan',
+  'Point of Sale Finance': 'point_of_sale_finance',
+  'Other': 'other',
+  // Also handle exact matches (for consistency)
+  'personal_loan': 'personal_loan',
+  'credit_card': 'credit_card',
+  'hire_purchase': 'hire_purchase',
+  'student_loan': 'student_loan',
+  'maintenance': 'maintenance',
+  'overdraft': 'overdraft'
+};
+
+/**
+ * Maps form enum values back to API values (reverse mapping)
+ */
+const FORM_TO_API_TYPE_MAPPING: Record<string, string> = {
+  'personal_loan': 'Personal Loan',
+  'credit_card': 'Credit Card',
+  'hire_purchase': 'Hire Purchase',
+  'student_loan': 'Student Loan',
+  'maintenance': 'Maintenance',
+  'overdraft': 'Overdraft',
+  'buy_now_pay_later': 'Buy Now Pay Later',
+  'catalogue_instalments': 'Catalogue Instalments',
+  'childcare_fees': 'Childcare Fees',
+  'credit_agreement': 'Credit Agreement',
+  'guarantor_existing_borrowing': 'Guarantor Existing Borrowing',
+  'guarantor_rental_agreement': 'Guarantor Rental Agreement',
+  'secured_personal_loan': 'Secured Personal Loan',
+  'shared_equity_loan': 'Shared Equity Loan',
+  'point_of_sale_finance': 'Point of Sale Finance',
+  'other': 'Other'
+};
 
 /**
  * Configuration for field transformations
@@ -165,7 +224,14 @@ export const transformCommitmentFormDataToApi = (
     // Only include if value exists and is not empty/default
     if (value !== undefined && value !== null && value !== '' && 
         !(typeof value === 'boolean' && value === false)) {
-      (apiData as any)[apiField] = value;
+      
+      // Special handling for commitment type - map form value to API value
+      if (formField === 'type' && typeof value === 'string') {
+        const apiTypeValue = FORM_TO_API_TYPE_MAPPING[value] || value;
+        (apiData as any)[apiField] = apiTypeValue;
+      } else {
+        (apiData as any)[apiField] = value;
+      }
     }
   });
 
@@ -209,7 +275,13 @@ export const transformApiDataToForm = (apiData: ApiCommitmentData): Record<strin
   Object.entries(FIELD_MAPPING_CONFIG.simpleFields).forEach(([formField, apiField]) => {
     const value = (apiData as any)[apiField];
     if (value !== undefined) {
-      formData[formField] = value;
+      // Special handling for commitment type - map API value to form value
+      if (formField === 'type' && typeof value === 'string') {
+        const formTypeValue = COMMITMENT_TYPE_MAPPING[value] || value;
+        formData[formField] = formTypeValue;
+      } else {
+        formData[formField] = value;
+      }
     }
   });
 

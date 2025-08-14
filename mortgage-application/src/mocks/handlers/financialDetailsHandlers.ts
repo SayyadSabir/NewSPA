@@ -22,15 +22,104 @@ let financialCommitments: FinancialCommitment[] = [];
 
 // We'll use the application ID from applicationStorage.ts
 
-// Sample financial commitments for resume case
-const sampleCommitments: FinancialCommitment[] = [
+// Sample financial commitments for resume case (in API format)
+const sampleApiCommitments = [
+  {
+    "applicant-details": {
+      "applicant-id": "123",
+      "applicant-name": "John Doe"
+    },
+    "type-of-commitment": "Personal Loan",
+    "outstanding-balance": {
+      "amount": 5000,
+      "currency": "GBP"
+    },
+    "monthly-payment": {
+      "amount": 250,
+      "currency": "GBP"
+    },
+    "term-remaining": {
+      "no-of-years": 2,
+      "no-of-months": 6
+    },
+    "completion-status": "nothing",
+    "notes": "Personal loan for home improvements",
+    "include-in-mortgage": false,
+    "id": "1"
+  },
+  {
+    "applicant-details": {
+      "applicant-id": "123",
+      "applicant-name": "John Doe"
+    },
+    "type-of-commitment": "Hire Purchase",
+    "outstanding-balance": {
+      "amount": 15000,
+      "currency": "GBP"
+    },
+    "monthly-payment": {
+      "amount": 400,
+      "currency": "GBP"
+    },
+    "term-remaining": {
+      "no-of-years": 3,
+      "no-of-months": 0
+    },
+    "completion-status": "nothing",
+    "notes": "Car hire purchase agreement",
+    "include-in-mortgage": false,
+    "has-bullet-payment": true,
+    "bullet-payment-amount": {
+      "amount": 5000,
+      "currency": "GBP"
+    },
+    "id": "2"
+  },
+  {
+    "applicant-details": {
+      "applicant-id": "123",
+      "applicant-name": "John Doe"
+    },
+    "type-of-commitment": "Credit Card",
+    "outstanding-balance": {
+      "amount": 2500,
+      "currency": "GBP"
+    },
+    "monthly-payment": {
+      "amount": 150,
+      "currency": "GBP"
+    },
+    "completion-status": "paid_in_full",
+    "commitment-amount-to-repaid": {
+      "amount": 2500,
+      "currency": "GBP"
+    },
+    "notes": "Credit card debt to be paid off",
+    "include-in-mortgage": true,
+    "id": "3"
+  },
+  {
+    "applicant-details": {
+      "applicant-id": "123",
+      "applicant-name": "John Doe"
+    },
+    "type-of-commitment": "Maintenance",
+    "monthly-payment": {
+      "amount": 800,
+      "currency": "GBP"
+    },
+    "completion-status": "nothing",
+    "notes": "Child maintenance payments",
+    "include-in-mortgage": false,
+    "id": "4"
+  }
 ];
 
 // Helper function to get commitments based on application ID
 const getCommitmentsByApplicationId = (applicationId?: string) => {
-  // If it's a resume case and we have an application ID, return sample commitments
+  // If it's a resume case and we have an application ID, return sample API commitments (raw format)
   if (applicationId && getIsResumeCase()) {
-    return sampleCommitments;
+    return sampleApiCommitments;
   }
   // Otherwise return the in-memory commitments (for new case)
   return financialCommitments;
