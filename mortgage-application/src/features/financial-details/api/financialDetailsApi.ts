@@ -3,6 +3,13 @@ import { FinancialCommitment } from '../types';
 import { setError, clearError } from '../slices/errorSlice';
 import { RootState } from '../../../store';
 import { getApplicationId } from '../utils/applicationStorage';
+import { transformCommitmentFormDataToApi } from '../utils/commitmentDataTransformer';
+
+// Default applicant details - in a real app, this would come from user context/state
+const DEFAULT_APPLICANT_DETAILS = {
+  applicantId: "21348669-71ef-11f0-b649-1375f2669fc",
+  applicantName: "John Janardhan"
+};
 
 // Application ID type for resume case
 export interface ApplicationParams {
@@ -37,11 +44,26 @@ export const financialDetailsApi = createApi({
     
     // We now use local storage for application status instead of an API endpoint
     saveFinancialCommitments: builder.mutation<FinancialCommitmentsResponse, SaveFinancialCommitmentsRequest>({      
-      query: (data) => ({
-        url: '/financial-commitments',
-        method: 'POST',
-        body: data,
-      }),
+      query: (data) => {
+        // Transform commitments to API format before sending
+        const transformedCommitments = data.commitments.map(commitment => 
+          transformCommitmentFormDataToApi(commitment, DEFAULT_APPLICANT_DETAILS)
+        );
+        
+        // Log the API payload for debugging/development
+        if (process.env.NODE_ENV === 'development') {
+          console.log('Saving commitments - API Payload:', JSON.stringify(transformedCommitments, null, 2));
+        }
+        
+        return {
+          url: '/financial-commitments',
+          method: 'POST',
+          body: {
+            ...data,
+            commitments: transformedCommitments
+          },
+        };
+      },
       // No need to invalidate tags since we're using optimistic updates
       onQueryStarted: async (data, { dispatch, queryFulfilled }) => {
         console.log('Saving commitments with applicationId:', data.applicationId);
@@ -75,11 +97,21 @@ export const financialDetailsApi = createApi({
       },
     }),
     updateFinancialCommitment: builder.mutation<FinancialCommitmentsResponse, {commitment: FinancialCommitment, applicationId?: string}>({      
-      query: ({commitment}) => ({
-        url: `/financial-commitments/${commitment.id}`,
-        method: 'PUT',
-        body: commitment,
-      }),
+      query: ({commitment}) => {
+        // Transform commitment to API format before sending
+        const transformedCommitment = transformCommitmentFormDataToApi(commitment, DEFAULT_APPLICANT_DETAILS);
+        
+        // Log the API payload for debugging/development
+        if (process.env.NODE_ENV === 'development') {
+          console.log('Updating commitment - API Payload:', JSON.stringify(transformedCommitment, null, 2));
+        }
+        
+        return {
+          url: `/financial-commitments/${commitment.id}`,
+          method: 'PUT',
+          body: transformedCommitment,
+        };
+      },
       // No need to invalidate tags since we're using optimistic updates
       // Update the local store with the updated commitment
       onQueryStarted: async ({commitment, applicationId}, { dispatch, queryFulfilled }) => {

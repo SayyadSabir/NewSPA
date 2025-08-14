@@ -42,20 +42,8 @@ const CommitmentForm: React.FC<CommitmentFormProps> = ({
 }) => {
   const isEditing = !!existingCommitment;
   
-  // Define the form values type based on whether we're editing or creating
-  type FormValues = Omit<FinancialCommitment, 'id'> & { id?: string };
-  
   const { register, handleSubmit, watch, formState: { errors }, setValue, reset, control, getValues } = useForm<any>({
-    defaultValues: existingCommitment || {
-      type: '',
-      balance: 0,
-      monthlyPayment: undefined,
-      completionStatus: 'nothing',
-      repaymentAmount: undefined,
-      includeInMortgage: false,
-      notes: '',
-      retirementAge: 65,
-    },
+    defaultValues: existingCommitment || {}
   });
 
   // Reset form when existingCommitment changes
@@ -101,7 +89,7 @@ const CommitmentForm: React.FC<CommitmentFormProps> = ({
     
     // For each field, check if it should be shown
     fieldNames.forEach(fieldName => {
-      // If field should not be shown, reset its value
+      // If field should not be shown, reset its value in case shown  before
       if (!shouldShowField(fieldName, fieldConfig, formValuesForConditionals)) {
         if (fieldName === 'balance') {
           setValue('balance', 0);
