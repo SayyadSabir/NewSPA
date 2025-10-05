@@ -1,6 +1,7 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import { FinancialCommitment } from '../types';
 import { setError, clearError } from '../slices/errorSlice';
+import { setApplicantSummary, setApplicationSummary } from '../slices/applicationMetadataSlice';
 import { RootState } from '../../../store';
 import { getApplicationId } from '../utils/applicationStorage';
 import { transformCommitmentFormDataToApi, transformApiDataToForm, ApiCommitmentData } from '../utils/commitmentDataTransformer';
@@ -19,9 +20,34 @@ export interface ApplicationParams {
 
 export interface FinancialCommitmentsResponse {
   success: boolean;
-  data: ApiCommitmentData[]; // Raw API data in kebab-case format
+  data: OverviewApiResponse; // Raw API data from overview API
   applicationId?: string;
   dateOfBirth?: string; // ISO format date string
+}
+
+export interface OverviewApiResponse {
+  'application-summary': {
+    'lending-type': string;
+    'main-purpose': string;
+  };
+  'financial-commitment': Array<{
+    'financial-commitments': {
+      'financial-commitments': boolean;
+      'total-repay-by-mortgage': number;
+      'commitment-details': ApiCommitmentData[];
+      'main-purpose': string;
+    };
+    'no-of-applicants': number;
+    'lending-type': string;
+    'is-joint-flow': boolean;
+  }>;
+  'applicant-summary': Array<{
+    'applicant-id': string;
+    'title': string;
+    'first-name': string;
+    'surname': string;
+    'middle-name': string;
+  }>;
 }
 
 export interface SaveFinancialCommitmentsRequest {
@@ -29,19 +55,59 @@ export interface SaveFinancialCommitmentsRequest {
   applicationId?: string;
 }
 
+// Custom base query that passes dispatch to transformResponse
+const baseQueryWithMetadata = async (args: any, api: any, extraOptions: any) => {
+  const result = await fetchBaseQuery({ baseUrl: '/api' })(args, api, extraOptions);
+  
+  // Pass dispatch function to transformResponse via meta for overview API calls
+  if (typeof args === 'string' && args.includes('overviewxapi/financial-commitments')) {
+    (result as any).meta = {
+      ...result.meta,
+      dispatch: api.dispatch
+    };
+  }
+  
+  return result;
+};
+
 export const financialDetailsApi = createApi({
   reducerPath: 'financialDetailsApi',
-  baseQuery: fetchBaseQuery({ baseUrl: '/api' }),
+  baseQuery: baseQueryWithMetadata,
   tagTypes: ['FinancialCommitments'],
   endpoints: (builder) => ({
-    // Get financial commitments from overview API
+    // Get financial commitments from overview API (also extracts and stores metadata)
     getFinancialCommitments: builder.query<FinancialCommitment[], ApplicationParams>({
       query: (params) => params.applicationId 
         ? `/overviewxapi/financial-commitments?applicationId=${params.applicationId}` 
         : '/overviewxapi/financial-commitments',
-      transformResponse: (response: FinancialCommitmentsResponse) => {
+      transformResponse: (response: FinancialCommitmentsResponse, meta, arg) => {
+        // Dispatch metadata to Redux store immediately
+        const dispatch = (meta as any)?.dispatch;
+        if (dispatch) {
+          // Store application summary
+          if (response.data['application-summary']) {
+            dispatch(setApplicationSummary(response.data['application-summary']));
+          }
+          
+          // Store applicant summary
+          if (response.data['applicant-summary'] && response.data['applicant-summary'].length > 0) {
+            dispatch(setApplicantSummary(response.data['applicant-summary']));
+          }
+        }
+        
+        // Extract commitment details from the nested overview API response
+        const commitmentDetails: ApiCommitmentData[] = [];
+        
+        if (response.data['financial-commitment']) {
+          response.data['financial-commitment'].forEach(commitment => {
+            if (commitment['financial-commitments']['commitment-details']) {
+              commitmentDetails.push(...commitment['financial-commitments']['commitment-details']);
+            }
+          });
+        }
+        
         // Transform API data (kebab-case) to form format (camelCase) for each commitment
-        return response.data.map(apiCommitment => ({
+        return commitmentDetails.map(apiCommitment => ({
           ...transformApiDataToForm(apiCommitment),
           id: apiCommitment.id || generateId() // Ensure we have an ID
         })) as FinancialCommitment[];
@@ -103,105 +169,10 @@ export const financialDetailsApi = createApi({
         }
       },
     }),
-    updateFinancialCommitment: builder.mutation<FinancialCommitmentsResponse, {commitment: FinancialCommitment, applicationId?: string}>({      
-      query: ({commitment}) => {
-        // Transform commitment to API format before sending
-        const transformedCommitment = transformCommitmentFormDataToApi(commitment, DEFAULT_APPLICANT_DETAILS);
-        
-        // Log the API payload for debugging/development
-        if (process.env.NODE_ENV === 'development') {
-          console.log('Updating commitment - API Payload:', JSON.stringify(transformedCommitment, null, 2));
-        }
-        
-        return {
-          url: `/financial-commitments/${commitment.id}`,
-          method: 'PUT',
-          body: transformedCommitment,
-        };
-      },
-      // No need to invalidate tags since we're using optimistic updates
-      // Update the local store with the updated commitment
-      onQueryStarted: async ({commitment, applicationId}, { dispatch, queryFulfilled }) => {
-        console.log('Updating commitment with applicationId:', applicationId);
-        
-        // Get the actual application ID to use for the cache key
-        const actualAppId = applicationId || getApplicationId();
-        console.log('Using actual applicationId for cache:', actualAppId);
-        
-        // Optimistic update
-        const patchResult = dispatch(
-          financialDetailsApi.util.updateQueryData(
-            'getFinancialCommitments', 
-            { applicationId: actualAppId }, 
-            (draft) => {
-              const index = draft.findIndex(c => c.id === commitment.id);
-              if (index !== -1) {
-                draft[index] = commitment;
-              }
-            }
-          )
-        );
-        
-        try {
-          await queryFulfilled;
-          console.log('Update mutation completed successfully');
-          // Clear any previous errors on success
-          dispatch(clearError());
-        } catch (error: any) {
-          // Don't undo the optimistic update - keep changes in store even if API fails
-          // patchResult.undo();
-          console.error('Error updating commitment:', error);
-          dispatch(setError(error.error?.data?.message || 'Failed to update financial commitment - Data will be kept locally'));
-        }
-      },
-    }),
-    deleteFinancialCommitment: builder.mutation<FinancialCommitmentsResponse, {id: string, applicationId?: string}>({      
-      query: ({id}) => ({
-        url: `/financial-commitments/${id}`,
-        method: 'DELETE',
-      }),
-      // No need to invalidate tags since we're using optimistic updates
-      // Remove the commitment from the local store
-      onQueryStarted: async ({id, applicationId}, { dispatch, queryFulfilled }) => {
-        console.log('Deleting commitment with applicationId:', applicationId);
-        
-        // Get the actual application ID to use for the cache key
-        const actualAppId = applicationId || getApplicationId();
-        console.log('Using actual applicationId for cache:', actualAppId);
-        
-        // Optimistic update
-        const patchResult = dispatch(
-          financialDetailsApi.util.updateQueryData(
-            'getFinancialCommitments', 
-            { applicationId: actualAppId }, 
-            (draft) => {
-              const index = draft.findIndex(c => c.id === id);
-              if (index !== -1) {
-                draft.splice(index, 1);
-              }
-            }
-          )
-        );
-        
-        try {
-          await queryFulfilled;
-          console.log('Delete mutation completed successfully');
-          // Clear any previous errors on success
-          dispatch(clearError());
-        } catch (error: any) {
-          // Don't undo the optimistic update - keep changes in store even if API fails
-          // patchResult.undo();
-          console.error('Error deleting commitment:', error);
-          dispatch(setError(error.error?.data?.message || 'Failed to delete financial commitment - Data will be kept locally'));
-        }
-      },
-    }),
   }),
 });
 
 export const {
   useGetFinancialCommitmentsQuery,
   useSaveFinancialCommitmentsMutation,
-  useUpdateFinancialCommitmentMutation,
-  useDeleteFinancialCommitmentMutation,
 } = financialDetailsApi;

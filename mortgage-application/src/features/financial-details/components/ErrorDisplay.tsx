@@ -37,7 +37,7 @@ const ErrorDisplay: React.FC = () => {
           &times;
         </button>
       </div>
-      <p>{errorMessage}</p>
+      <p>{JSON.stringify(errorMessage)}</p>
     </div>
   );
 };

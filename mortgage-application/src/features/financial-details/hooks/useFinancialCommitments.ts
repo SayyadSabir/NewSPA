@@ -3,9 +3,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '../../../store/index';
 import { 
   useGetFinancialCommitmentsQuery,
-  useSaveFinancialCommitmentsMutation,
-  useUpdateFinancialCommitmentMutation as useUpdateCommitmentMutation,
-  useDeleteFinancialCommitmentMutation as useDeleteCommitmentMutation 
+  useSaveFinancialCommitmentsMutation
 } from '../api/financialDetailsApi';
 import { getApplicationId, isResumeCase } from '../utils/applicationStorage';
 import { FinancialCommitment } from '../types';
@@ -26,13 +24,11 @@ export const useFinancialCommitments = () => {
       skip: isLoadingStatus
     });
   
-  // Mutations for CRUD operations
+  // Mutations for CRUD operations - only save mutation needed
   const [saveCommitments, { isLoading: isSaving }] = useSaveFinancialCommitmentsMutation();
-  const [updateCommitmentApi, { isLoading: isUpdating }] = useUpdateCommitmentMutation();
-  const [deleteCommitmentApi, { isLoading: isDeleting }] = useDeleteCommitmentMutation();
   
   // Combined loading state
-  const isLoading = isLoadingStatus || isLoadingCommitments;
+  const isLoading = isLoadingStatus || isLoadingCommitments || isSaving;
   
   // Track if form has been modified
   const [formModified, setFormModified] = useState(false);
@@ -84,47 +80,67 @@ export const useFinancialCommitments = () => {
     // Update local state via Redux
     dispatch(updateCommitment(updatedCommitment));
     
-    // Also update via API
+    // Save all commitments via API (including the updated one)
     try {
-      // Use the renamed API mutation
-      await updateCommitmentApi({
-        commitment: updatedCommitment,
+      const updatedCommitments = commitments.map(c => 
+        c.id === updatedCommitment.id ? updatedCommitment : c
+      );
+      await saveCommitments({
+        commitments: updatedCommitments,
         applicationId
       }).unwrap();
       return true;
     } catch (error) {
-      console.error('Failed to update commitment:', error);
+      console.error('Failed to save commitments after update:', error);
       return false;
     }
-  }, [dispatch, updateCommitment, applicationId]);
+  }, [dispatch, updateCommitment, commitments, saveCommitments, applicationId]);
 
-  const handleToggleIncludeInMortgage = useCallback((id: string, include: boolean) => {
+  const handleToggleIncludeInMortgage = useCallback(async (id: string, include: boolean) => {
     const commitment = commitments.find(c => c.id === id);
     if (commitment) {
       const updatedCommitment = {
         ...commitment,
         includeInMortgage: include
       };
+      // Update local state via Redux
       dispatch(updateCommitment(updatedCommitment));
+      
+      // Save all commitments via API
+      try {
+        const updatedCommitments = commitments.map(c => 
+          c.id === id ? updatedCommitment : c
+        );
+        await saveCommitments({
+          commitments: updatedCommitments,
+          applicationId
+        }).unwrap();
+        return true;
+      } catch (error) {
+        console.error('Failed to save commitments after toggle:', error);
+        return false;
+      }
     }
-  }, [commitments, dispatch]);
+    return false;
+  }, [commitments, dispatch, updateCommitment, saveCommitments, applicationId]);
 
   const handleRemoveCommitment = useCallback(async (id: string) => {
     // Update local state via Redux
     dispatch(removeCommitmentAction(id));
     
-    // Also delete via API
+    // Save remaining commitments via API
     try {
-      await deleteCommitmentApi({
-        id,
+      const remainingCommitments = commitments.filter(c => c.id !== id);
+      await saveCommitments({
+        commitments: remainingCommitments,
         applicationId
       }).unwrap();
       return true;
     } catch (error) {
-      console.error('Failed to delete commitment:', error);
+      console.error('Failed to save commitments after delete:', error);
       return false;
     }
-  }, [dispatch, deleteCommitmentApi, applicationId]);
+  }, [dispatch, removeCommitmentAction, commitments, saveCommitments, applicationId]);
 
   const handleAddCommitment = useCallback((commitment: Omit<FinancialCommitment, 'id'>) => {
     dispatch(addCommitmentAction(commitment));
@@ -134,8 +150,6 @@ export const useFinancialCommitments = () => {
     commitments,
     isLoading,
     isSaving,
-    isUpdating,
-    isDeleting,
     error,
     refetch,
     formModified,

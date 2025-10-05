@@ -33,6 +33,9 @@ export interface ApiCommitmentData {
   'term-remaining'?: TermRemaining;
   'has-bullet-payment'?: boolean;
   'completion-status'?: string;
+  // New fields from overview API
+  'secured-against-mortgage'?: boolean;
+  'bullet-balloon-payment'?: boolean;
 }
 
 /**
@@ -61,7 +64,11 @@ const COMMITMENT_TYPE_MAPPING: Record<string, string> = {
   'Shared Equity Loan': 'shared_equity_loan',
   'Point of Sale Finance': 'point_of_sale_finance',
   'Other': 'other',
-  // Also handle exact matches (for consistency)
+  // Handle lowercase values from overview API and exact matches
+  'personal loan': 'personal_loan',
+  'credit card': 'credit_card',
+  'hire purchase': 'hire_purchase',
+  'student loan': 'student_loan',
   'personal_loan': 'personal_loan',
   'credit_card': 'credit_card',
   'hire_purchase': 'hire_purchase',
@@ -113,7 +120,10 @@ const FIELD_MAPPING_CONFIG = {
     notes: 'notes',
     includeInMortgage: 'include-in-mortgage',
     retirementAge: 'retirement-age',
-    hasBulletPayment: 'has-bullet-payment'
+    hasBulletPayment: 'has-bullet-payment',
+    // New fields from overview API
+    securedAgainstMortgage: 'secured-against-mortgage',
+    bulletBalloonPayment: 'bullet-balloon-payment'
   },
   
   // Special composite fields that need custom transformation

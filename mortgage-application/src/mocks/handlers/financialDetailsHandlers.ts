@@ -22,107 +22,129 @@ let financialCommitments: FinancialCommitment[] = [];
 
 // We'll use the application ID from applicationStorage.ts
 
-// Sample financial commitments for resume case (in API format)
-const sampleApiCommitments = [
-  {
-    "applicant-details": {
-      "applicant-id": "123",
-      "applicant-name": "John Doe"
-    },
-    "type-of-commitment": "Personal Loan",
-    "outstanding-balance": {
-      "amount": 5000,
-      "currency": "GBP"
-    },
-    "monthly-payment": {
-      "amount": 250,
-      "currency": "GBP"
-    },
-    "term-remaining": {
-      "no-of-years": 2,
-      "no-of-months": 6
-    },
-    "completion-status": "nothing",
-    "notes": "Personal loan for home improvements",
-    "include-in-mortgage": false,
-    "id": "1"
+// Sample API response
+const sampleApi = 
+{
+  "application-summary":{
+    "lending-type":"residential",
+    "main-purpose":"FIRST-TIME-BUYER"
   },
-  {
-    "applicant-details": {
-      "applicant-id": "123",
-      "applicant-name": "John Doe"
+  "financial-commitment":[
+    {
+    "financial-commitments": {
+      "financial-commitments": true,
+      "total-repay-by-mortgage": 0,
+      "commitment-details": [
+        {
+          "id": "1",
+          "remaining-amount": {
+            "amount": 0,
+            "currency": "GBP"
+          },
+          "secured-against-mortgage": false,
+          "type-of-commitment": "credit card",
+          "applicant-details": {
+            "applicant-name": "Advice Seeker",
+            "applicant-id": "cc863d1e"
+          },
+          "monthly-payment": {
+            "amount": 1000,
+            "currency": "GBP"
+          },
+          "commitment-amount-to-repaid": {
+            "amount": 5000,
+            "currency": "GBP"
+          },
+          "bullet-balloon-payment": false,
+          "commitment-before-completion": "Remaining",
+          "outstanding-balance": {
+            "amount": 5000,
+            "currency": "GBP"
+          }
+        },
+        {
+          "id": "2",
+          "remaining-amount": {
+            "amount": 0,
+            "currency": "GBP"
+          },
+          "secured-against-mortgage": false,
+          "type-of-commitment": "student loan",
+          "applicant-details": {
+            "applicant-name": "sabir Seeker",
+            "applicant-id": "cc863d1e"
+          },
+          "monthly-payment": {
+            "amount": 1000,
+            "currency": "GBP"
+          },
+          "commitment-amount-to-repaid": {
+            "amount": 5000,
+            "currency": "GBP"
+          },
+          "bullet-balloon-payment": false,
+          "commitment-before-completion": "Remaining",
+          "outstanding-balance": {
+            "amount": 5000,
+            "currency": "GBP"
+          }
+        }
+      ],
+      "main-purpose": "FIRST-TIME-BUYER",
+   
     },
-    "type-of-commitment": "Hire Purchase",
-    "outstanding-balance": {
-      "amount": 15000,
-      "currency": "GBP"
-    },
-    "monthly-payment": {
-      "amount": 400,
-      "currency": "GBP"
-    },
-    "term-remaining": {
-      "no-of-years": 3,
-      "no-of-months": 0
-    },
-    "completion-status": "nothing",
-    "notes": "Car hire purchase agreement",
-    "include-in-mortgage": false,
-    "has-bullet-payment": true,
-    "bullet-payment-amount": {
-      "amount": 5000,
-      "currency": "GBP"
-    },
-    "id": "2"
-  },
-  {
-    "applicant-details": {
-      "applicant-id": "123",
-      "applicant-name": "John Doe"
-    },
-    "type-of-commitment": "Credit Card",
-    "outstanding-balance": {
-      "amount": 2500,
-      "currency": "GBP"
-    },
-    "monthly-payment": {
-      "amount": 150,
-      "currency": "GBP"
-    },
-    "completion-status": "paid_in_full",
-    "commitment-amount-to-repaid": {
-      "amount": 2500,
-      "currency": "GBP"
-    },
-    "notes": "Credit card debt to be paid off",
-    "include-in-mortgage": true,
-    "id": "3"
-  },
-  {
-    "applicant-details": {
-      "applicant-id": "123",
-      "applicant-name": "John Doe"
-    },
-    "type-of-commitment": "Maintenance",
-    "monthly-payment": {
-      "amount": 800,
-      "currency": "GBP"
-    },
-    "completion-status": "nothing",
-    "notes": "Child maintenance payments",
-    "include-in-mortgage": false,
-    "id": "4"
+    "no-of-applicants": 1,
+    "lending-type": "residential",
+    "is-joint-flow": false,
   }
-];
+  ],
+
+  "applicant-summary":[
+    {
+      "applicant-id": "cc863d1e-71ef-11f0-b649-1375f2669fc",
+      "title": "John Janardhan",
+      "first-name": "John",
+      "surname": "Janardhan",
+      "middle-name": "Janardhan"    
+    }
+  ]
+}
 
 // Helper function to get commitments based on application ID
 const getCommitmentsByApplicationId = (applicationId?: string) => {
   // If it's a resume case and we have an application ID, return sample API commitments (raw format)
   if (applicationId && getIsResumeCase()) {
-    return sampleApiCommitments;
+    return sampleApi;
   }
-  // Otherwise return the in-memory commitments (for new case)
-  return financialCommitments;
+  // Otherwise return empty structure for new case
+  return {
+    "application-summary": {
+      "lending-type": "residential",
+      "main-purpose": "FIRST-TIME-BUYER"
+    },
+    "financial-commitment": [
+      {
+        "financial-commitments": {
+          "financial-commitments": true,
+          "total-repay-by-mortgage": 0,
+          "commitment-details": financialCommitments,
+          "main-purpose": "FIRST-TIME-BUYER"
+        },
+        "no-of-applicants": 1,
+        "lending-type": "residential",
+        "is-joint-flow": false
+      }
+    ],
+    "applicant-summary": [
+      {
+        "applicant-id": "cc863d1e-71ef-11f0-b649-1375f2669fc",
+        "title": "John Janardhan",
+        "first-name": "John",
+        "surname": "Janardhan",
+        "middle-name": "Janardhan"
+      }
+    ]
+  };
 };
 
 // Initialize the mock database
@@ -197,58 +219,6 @@ export const financialDetailsHandlers = [
     return HttpResponse.json({
       success: true,
       message: 'Commitments saved successfully'
-    });
-  }),
-
-  // Update a financial commitment
-  http.put('/api/financial-commitments/:id', async ({ params, request }) => {
-    const { id } = params;
-    await delay(300);
-    
-    // Simulate failure for testing error handling
-    if (shouldFail()) {
-      console.log(`PUT financial-commitments/${id} - simulating failure`);
-      return new HttpResponse(JSON.stringify({
-        success: false,
-        message: 'Server error: Failed to update financial commitment'
-      }), {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' }
-      });
-    }
-    
-    // Just return success - we're using optimistic updates in the UI
-    console.log(`PUT financial-commitments/${id} - returning success`);
-    
-    return HttpResponse.json({
-      success: true,
-      message: 'Commitment updated successfully'
-    });
-  }),
-
-  // Delete a financial commitment
-  http.delete('/api/financial-commitments/:id', async ({ params }) => {
-    const { id } = params;
-    await delay(300);
-    
-    // Simulate failure for testing error handling
-    if (shouldFail()) {
-      console.log(`DELETE financial-commitments/${id} - simulating failure`);
-      return new HttpResponse(JSON.stringify({
-        success: false,
-        message: 'Server error: Failed to delete financial commitment'
-      }), {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' }
-      });
-    }
-    
-    // Just return success - we're using optimistic updates in the UI
-    console.log(`DELETE financial-commitments/${id} - returning success`);
-    
-    return HttpResponse.json({
-      success: true,
-      message: `Commitment ${id} deleted successfully`
     });
   }),
 

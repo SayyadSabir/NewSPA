@@ -29,15 +29,7 @@ const MortgageApplication: React.FC = () => {
     startMsw().then(() => {
       setIsMswInitialized(true);
     });
-    
-    // Clear browser history when the application loads
-    clearBrowserHistory();
-    
-    // Disable browser back button globally from the start
-    const cleanup = disableBrowserBack();
-    
-    // Clean up when component unmounts
-    return cleanup;
+   
   }, []);
 
   if (!isMswInitialized) {

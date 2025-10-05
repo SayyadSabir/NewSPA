@@ -15,8 +15,6 @@ export const useFinancialDetailsFlow = () => {
     commitments,
     isLoading: isLoadingCommitments,
     isSaving,
-    isUpdating,
-    isDeleting,
     saveCommitments,
     updateCommitment,
     removeCommitment,
@@ -32,7 +30,7 @@ export const useFinancialDetailsFlow = () => {
 
   // Combined loading state
   const isLoading = isLoadingCommitments;
-  const isProcessing = isSaving || isUpdating || isDeleting;
+  const isProcessing = isSaving; // Only isSaving is available now
   
   // Update completed steps when commitments change
   useEffect(() => {
