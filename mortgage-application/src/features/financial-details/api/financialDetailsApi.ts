@@ -2,6 +2,7 @@ import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import { FinancialCommitment } from '../types';
 import { setError, clearError } from '../slices/errorSlice';
 import { setApplicantSummary, setApplicationSummary } from '../slices/applicationMetadataSlice';
+import { setFormData } from '../slices/debtConsolidationSlice';
 import { RootState } from '../../../store';
 import { getApplicationId } from '../utils/applicationStorage';
 import { transformCommitmentFormDataToApi, transformApiDataToForm, ApiCommitmentData } from '../utils/commitmentDataTransformer';
@@ -48,6 +49,15 @@ export interface OverviewApiResponse {
     'surname': string;
     'middle-name': string;
   }>;
+  'debt-consolidation'?: {
+    'total-commitment-to-be-repaid': number;
+    'reason-for-using-new-mortgage-to-consolidate-debt': 'Reduce monthly outgoings' | 'Reduce interest rate' | 'Other';
+    'reason-for-consolidate-desc': string;
+    'having-difficulty-paying-existing-financial-commitment': boolean;
+    'considered-renegotiating-with-creditors'?: boolean;
+    'attestation-client-understand-implication'?: boolean;
+    'attestation-client-considered-renegotiation'?: boolean;
+  };
 }
 
 export interface SaveFinancialCommitmentsRequest {
@@ -92,6 +102,20 @@ export const financialDetailsApi = createApi({
           // Store applicant summary
           if (response.data['applicant-summary'] && response.data['applicant-summary'].length > 0) {
             dispatch(setApplicantSummary(response.data['applicant-summary']));
+          }
+          
+          // Store debt consolidation data if present (for resume scenario)
+          if (response.data['debt-consolidation']) {
+            const debtData = response.data['debt-consolidation'];
+            dispatch(setFormData({
+              totalCommitmentToBeRepaid: debtData['total-commitment-to-be-repaid'],
+              reasonForUsingNewMortgageToConsolidateDebt: debtData['reason-for-using-new-mortgage-to-consolidate-debt'],
+              reasonForConsolidateDesc: debtData['reason-for-consolidate-desc'],
+              havingDifficultyPayingExistingFinancialCommitment: debtData['having-difficulty-paying-existing-financial-commitment'],
+              consideredRenegotiatingWithCreditors: debtData['considered-renegotiating-with-creditors'],
+              attestationClientUnderstandImplication: debtData['attestation-client-understand-implication'],
+              attestationClientConsideredRenegotiation: debtData['attestation-client-considered-renegotiation'],
+            }));
           }
         }
         

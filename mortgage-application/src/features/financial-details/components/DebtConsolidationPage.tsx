@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
+import { useForm, Controller } from 'react-hook-form';
 import {
   Box,
   Typography,
@@ -15,19 +16,16 @@ import {
   Alert,
   CircularProgress,
   Checkbox,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
+  TextField,
 } from '@mui/material';
 
 import TubeStopStepper from '../../../components/common/TubeStopStepper';
-import { FinancialCommitment } from '../types';
 import { useFinancialCommitments } from '../hooks/useFinancialCommitments';
+import { useSaveDebtConsolidationMutation } from '../api/debtConsolidationApi';
+import { updateFormData, markAsSaved, DebtConsolidationFormData } from '../slices/debtConsolidationSlice';
+import { RootState } from '../../../store';
+import { getApplicationId } from '../utils/applicationStorage';
 import { ArrowBack } from '@mui/icons-material';
-// No longer using NavigationContext
 
 interface DebtConsolidationPageProps {
   onBack?: () => void;
@@ -35,21 +33,62 @@ interface DebtConsolidationPageProps {
 }
 
 const DebtConsolidationPage: React.FC<DebtConsolidationPageProps> = ({ onBack, onSaveAndReturn }) => {
-  // For DebtConsolidationPage, we should always use 1 as the activeStep
-  // This ensures the stepper shows the second step as active
+  const dispatch = useDispatch();
   const activeStep = 1;
   
-  // Log the activeStep for debugging
-  console.log('DebtConsolidationPage - activeStep:', activeStep);
-  const { 
-    commitments, 
-    isSaving, 
-    saveCommitments, 
-    toggleIncludeInMortgage 
-  } = useFinancialCommitments();
+  // Get data from Redux store
+  const { commitments } = useFinancialCommitments();
+  const debtConsolidationState = useSelector((state: RootState) => state.debtConsolidation);
+  const [saveDebtConsolidation, { isLoading: isSaving }] = useSaveDebtConsolidationMutation();
+  
+  // Ref to store initial debt consolidation data for change detection
+  const initialDebtDataRef = useRef<DebtConsolidationFormData | null>(null);
   
   // Steps for the tube stop stepper
   const steps = ['Financial commitments', 'Debt consolidation'];
+  
+  // Calculate total commitment amount from selected commitments
+  const totalCommitmentAmount = commitments
+    .filter(commitment => commitment.includeInMortgage)
+    .reduce((total, commitment) => total + (commitment.balance || 0), 0);
+  
+  // React Hook Form setup with proper default values
+  const { control, handleSubmit, watch, setValue, formState: { errors } } = useForm<DebtConsolidationFormData>({
+    defaultValues: {
+      totalCommitmentToBeRepaid: debtConsolidationState.formData.totalCommitmentToBeRepaid ?? 0,
+      reasonForUsingNewMortgageToConsolidateDebt: debtConsolidationState.formData.reasonForUsingNewMortgageToConsolidateDebt ?? '',
+      reasonForConsolidateDesc: debtConsolidationState.formData.reasonForConsolidateDesc ?? '',
+      havingDifficultyPayingExistingFinancialCommitment: debtConsolidationState.formData.havingDifficultyPayingExistingFinancialCommitment ?? false,
+      consideredRenegotiatingWithCreditors: debtConsolidationState.formData.consideredRenegotiatingWithCreditors ?? false,
+      attestationClientUnderstandImplication: debtConsolidationState.formData.attestationClientUnderstandImplication ?? false,
+      attestationClientConsideredRenegotiation: debtConsolidationState.formData.attestationClientConsideredRenegotiation ?? false,
+    },
+  });
+  
+  // Watch specific form values for conditional rendering
+  const havingDifficulty = watch('havingDifficultyPayingExistingFinancialCommitment');
+  const consideredRenegotiating = watch('consideredRenegotiatingWithCreditors');
+  
+  // No automatic field resetting - let the API payload logic handle conditional fields
+  // This prevents polluting the store with false values for untouched fields
+  
+  // Update total commitment amount when commitments change
+  useEffect(() => {
+    setValue('totalCommitmentToBeRepaid', totalCommitmentAmount);
+    dispatch(updateFormData({ totalCommitmentToBeRepaid: totalCommitmentAmount }));
+  }, [totalCommitmentAmount, setValue, dispatch]);
+  
+  // Capture initial debt consolidation data from Redux store (from API response)
+  useEffect(() => {
+    // Only capture if we have actual data (not all undefined values)
+    const hasActualData = debtConsolidationState.formData && 
+      Object.values(debtConsolidationState.formData).some(value => value !== undefined);
+    
+    if (hasActualData && !initialDebtDataRef.current) {
+      initialDebtDataRef.current = { ...debtConsolidationState.formData };
+      console.log('Captured initial debt consolidation data:', initialDebtDataRef.current);
+    }
+  }, [debtConsolidationState.formData]);
 
   // Format currency for display
   const formatCurrency = (amount: number | undefined) => {
@@ -60,56 +99,84 @@ const DebtConsolidationPage: React.FC<DebtConsolidationPageProps> = ({ onBack, o
     }).format(amount);
   };
 
-  // Helper function to get readable commitment type
-  const getCommitmentTypeLabel = (type: string): string => {
-    const typeMap: Record<string, string> = {
-      credit_card: 'Credit card / store card',
-      buy_now_pay_later: 'Buy now, pay later instalments',
-      catalogue_instalments: 'Catalogue instalments',
-      childcare_fees: 'Childcare or school fees',
-      credit_agreement: 'Credit agreement',
-      guarantor_existing_borrowing: 'Guarantor on existing borrowing',
-      guarantor_rental_agreement: 'Guarantor on rental agreement',
-      hire_purchase: 'Hire purchase (HP) or PCP',
-      maintenance: 'Maintenance for ex-partner or child',
-      overdraft: 'Overdraft',
-      overdraft_secured: 'Overdraft secured against investment',
-      personal_loan: 'Personal loan',
-      point_of_sale_finance: 'Point-of-sale finance',
-      secured_personal_loan: 'Secured personal loan',
-      shared_equity_loan: 'Shared equity loan',
-      student_loan: 'Student loan',
-      other: 'Other regular payments',
-    };
+  // Helper function to check if form data has changed by comparing with initial API data
+  const hasFormDataChanged = (currentData: DebtConsolidationFormData): boolean => {
+    if (!initialDebtDataRef.current) {
+      // If no initial data captured, it's a new case (always save)
+      return true;
+    }
     
-    return typeMap[type] || type;
+    // Compare current form data with initial API data using JSON comparison
+    const currentDataString = JSON.stringify(currentData);
+    const initialDataString = JSON.stringify(initialDebtDataRef.current);
+    console.log(currentDataString)
+    console.log(initialDataString)
+    const hasChanged = currentDataString !== initialDataString;
+    console.log('Form data comparison:', {
+      hasInitialData: !!initialDebtDataRef.current,
+      hasChanged,
+      currentData,
+      initialData: initialDebtDataRef.current
+    });
+    
+    return hasChanged;
   };
 
-  // Toggle include in mortgage
-  const handleToggleIncludeInMortgage = (id: string, currentValue: boolean) => {
-    toggleIncludeInMortgage(id, !currentValue);
-  };
-
-  // Handle saving and proceeding to next step
-  const handleNext = async () => {
-    const success = await saveCommitments();
-    if (success) {
-      // Navigate to next step
-      console.log('Navigate to next step');
+  // Handle form submission
+  const onSubmit = async (data: DebtConsolidationFormData) => {
+    try {
+      // Update Redux store with final form data
+      dispatch(updateFormData(data));
+      
+      const applicationId = getApplicationId();
+      
+      // Check if form data has changed (works for both new and resume cases)
+      const hasChanged = hasFormDataChanged(data);
+      
+      if (!hasChanged) {
+        console.log('No changes detected - skipping API call');
+        dispatch(markAsSaved());
+        return;
+      }
+      
+      console.log('Changes detected - proceeding with API call');
+      
+      // Transform form data to API format with conditional fields
+      const apiData: any = {
+        'total-commitment-to-be-repaid': data.totalCommitmentToBeRepaid,
+        'reason-for-using-new-mortgage-to-consolidate-debt': data.reasonForUsingNewMortgageToConsolidateDebt,
+        'reason-for-consolidate-desc': data.reasonForConsolidateDesc,
+        'having-difficulty-paying-existing-financial-commitment': data.havingDifficultyPayingExistingFinancialCommitment,
+      };
+      
+      // Only include conditional fields if their parent conditions are met
+      if (data.havingDifficultyPayingExistingFinancialCommitment) {
+        apiData['considered-renegotiating-with-creditors'] = data.consideredRenegotiatingWithCreditors;
+        apiData['attestation-client-understand-implication'] = data.attestationClientUnderstandImplication;
+        
+        if (data.consideredRenegotiatingWithCreditors) {
+          apiData['attestation-client-considered-renegotiation'] = data.attestationClientConsideredRenegotiation;
+        }
+      }
+      
+      await saveDebtConsolidation({ applicationId, data: apiData }).unwrap();
+      dispatch(markAsSaved());
+      console.log('Debt consolidation saved successfully');
+    } catch (error) {
+      console.error('Error saving debt consolidation:', error);
     }
   };
 
   // Handle saving and returning to overview
   const handleSaveAndReturn = async () => {
-    const success = await saveCommitments();
-    if (success && onSaveAndReturn) {
+    await handleSubmit(onSubmit)();
+    if (onSaveAndReturn) {
       onSaveAndReturn();
     }
   };
 
   // Handle going back to financial commitments
   const handleBack = () => {
-    // Navigate back to financial commitments
     if (onBack) {
       onBack();
     }
@@ -140,53 +207,167 @@ const DebtConsolidationPage: React.FC<DebtConsolidationPageProps> = ({ onBack, o
 
           <Divider sx={{ mb: 3 }} />
 
-          {commitments.length === 0 ? (
-            <Alert severity="info" sx={{ mb: 3 }}>
-              No financial commitments have been added. Please go back and add commitments first.
-            </Alert>
-          ) : (
-            <>
-              <Typography variant="h6" gutterBottom>
-                Select which debts to consolidate into the mortgage
+          <form onSubmit={handleSubmit(onSubmit)}>
+            {/* Total commitment amount */}
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="body1" sx={{ mb: 1, fontWeight: 'medium' }}>
+                Total commitments to be repaid using new mortgage
               </Typography>
-              <Typography variant="body2" sx={{ mb: 3 }}>
-                Select the commitments that will be repaid using this mortgage.
+              <Typography variant="h6" color="primary">
+                {formatCurrency(totalCommitmentAmount)}
               </Typography>
+            </Box>
 
-              <TableContainer component={Paper} variant="outlined" sx={{ mb: 4 }}>
-                <Table>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Commitment</TableCell>
-                      <TableCell align="right">Balance</TableCell>
-                      <TableCell align="center">Include in mortgage</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {commitments.map((commitment) => (
-                      <TableRow key={commitment.id}>
-                        <TableCell>{getCommitmentTypeLabel(commitment.type)}</TableCell>
-                        <TableCell align="right">{formatCurrency(commitment.balance)}</TableCell>
-                        <TableCell align="center">
-                          <Checkbox
-                            checked={commitment.includeInMortgage}
-                            onChange={() => handleToggleIncludeInMortgage(commitment.id, commitment.includeInMortgage)}
-                            color="primary"
-                          />
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
+            <Divider sx={{ mb: 3 }} />
 
-              {isSaving === false && commitments.length > 0 && (
-                <Alert severity="success" sx={{ mt: 3 }}>
-                  Debt consolidation preferences saved successfully.
-                </Alert>
-              )}
-            </>
-          )}
+            {/* Reason for consolidation */}
+            <Box sx={{ mb: 3 }}>
+              <FormControl component="fieldset">
+                <FormLabel component="legend" sx={{ mb: 2 }}>
+                  Reason for wanting to use the new mortgage to consolidate debt
+                </FormLabel>
+                <Controller
+                  name="reasonForUsingNewMortgageToConsolidateDebt"
+                  control={control}
+                  rules={{ required: 'Please select a reason' }}
+                  render={({ field }) => (
+                    <RadioGroup {...field}>
+                      <FormControlLabel
+                        value="Reduce monthly outgoings"
+                        control={<Radio />}
+                        label="Reduce monthly outgoings"
+                      />
+                      <FormControlLabel
+                        value="Reduce interest rate"
+                        control={<Radio />}
+                        label="Reduce interest rate"
+                      />
+                      <FormControlLabel
+                        value="Other"
+                        control={<Radio />}
+                        label="Another reason"
+                      />
+                    </RadioGroup>
+                  )}
+                />
+                {errors.reasonForUsingNewMortgageToConsolidateDebt && (
+                  <Typography color="error" variant="caption">
+                    {errors.reasonForUsingNewMortgageToConsolidateDebt.message}
+                  </Typography>
+                )}
+              </FormControl>
+            </Box>
+
+            {/* Additional information */}
+            <Box sx={{ mb: 3 }}>
+              <Controller
+                name="reasonForConsolidateDesc"
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    fullWidth
+                    multiline
+                    rows={3}
+                    label="Please give more information"
+                    placeholder="Characters 0/1000"
+                    inputProps={{ maxLength: 1000 }}
+                    helperText={`${field.value?.length || 0}/1000 characters`}
+                  />
+                )}
+              />
+            </Box>
+
+            {/* Difficulty paying question */}
+            <Box sx={{ mb: 3 }}>
+              <FormControl component="fieldset">
+                <FormLabel component="legend" sx={{ mb: 2 }}>
+                  Is the client having difficulty paying their existing financial commitments?
+                </FormLabel>
+                <Controller
+                  name="havingDifficultyPayingExistingFinancialCommitment"
+                  control={control}
+                  render={({ field }) => (
+                    <RadioGroup
+                      {...field}
+                      value={field.value ? 'Yes' : 'No'}
+                      onChange={(e) => field.onChange(e.target.value === 'Yes')}
+                    >
+                      <FormControlLabel value="Yes" control={<Radio />} label="Yes" />
+                      <FormControlLabel value="No" control={<Radio />} label="No" />
+                    </RadioGroup>
+                  )}
+                />
+              </FormControl>
+            </Box>
+
+            {/* Conditional renegotiation question */}
+            {havingDifficulty && (
+              <Box sx={{ mb: 3 }}>
+                <FormControl component="fieldset">
+                  <FormLabel component="legend" sx={{ mb: 2 }}>
+                    Have they considered renegotiating their payments with their creditors?
+                  </FormLabel>
+                  <Controller
+                    name="consideredRenegotiatingWithCreditors"
+                    control={control}
+                    render={({ field }) => (
+                      <RadioGroup
+                        {...field}
+                        value={field.value ? 'Yes' : 'No'}
+                        onChange={(e) => field.onChange(e.target.value === 'Yes')}
+                      >
+                        <FormControlLabel value="Yes" control={<Radio />} label="Yes" />
+                        <FormControlLabel value="No" control={<Radio />} label="No" />
+                      </RadioGroup>
+                    )}
+                  />
+                </FormControl>
+              </Box>
+            )}
+
+            {/* Attestation checkboxes */}
+            <Box sx={{ mb: 3 }}>
+              <Controller
+                name="attestationClientUnderstandImplication"
+                control={control}
+                render={({ field }) => (
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        {...field}
+                        checked={field.value || false}
+                        onChange={(e) => field.onChange(e.target.checked)}
+                      />
+                    }
+                    label="The client understands the implications of securing a previously unsecured debt and that there could be an additional cost if they take a lower rate over a longer term."
+                  />
+                )}
+              />
+            </Box>
+
+            {consideredRenegotiating && (
+              <Box sx={{ mb: 3 }}>
+                <Controller
+                  name="attestationClientConsideredRenegotiation"
+                  control={control}
+                  render={({ field }) => (
+                    <FormControlLabel
+                      control={
+                        <Checkbox
+                          {...field}
+                          checked={field.value || false}
+                          onChange={(e) => field.onChange(e.target.checked)}
+                        />
+                      }
+                      label="The client has considered renegotiating their payments with their creditors and is happy to proceed. They understand the implications of securing a previously unsecured debt and that there could be an additional cost if they take a lower rate over a longer term."
+                    />
+                  )}
+                />
+              </Box>
+            )}
+
+          </form>
 
           <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 4 }}>
             <Button 
@@ -207,10 +388,10 @@ const DebtConsolidationPage: React.FC<DebtConsolidationPageProps> = ({ onBack, o
               <Button 
                 variant="contained" 
                 color="primary" 
-                onClick={handleNext}
+                onClick={handleSubmit(onSubmit)}
                 disabled={isSaving}
               >
-                {isSaving ? <CircularProgress size={24} /> : 'Next'}
+                {isSaving ? <CircularProgress size={24} /> : 'Save and proceed'}
               </Button>
             </Box>
           </Box>

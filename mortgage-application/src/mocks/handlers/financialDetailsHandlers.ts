@@ -114,7 +114,10 @@ const sampleApi =
 const getCommitmentsByApplicationId = (applicationId?: string) => {
   // If it's a resume case and we have an application ID, return sample API commitments (raw format)
   if (applicationId && getIsResumeCase()) {
-    return sampleApi;
+    return {
+      ...sampleApi,
+      "debt-consolidation": false
+    };
   }
   // Otherwise return empty structure for new case
   return {
@@ -220,6 +223,33 @@ export const financialDetailsHandlers = [
       success: true,
       message: 'Commitments saved successfully'
     });
+  }),
+
+  // Save debt consolidation data
+  http.post('/api/debt-consolidation', async ({ request }) => {
+    await delay(800);
+    
+    try {
+      const body = await request.json() as any;
+      console.log('POST debt-consolidation - received data:', body);
+      
+      // In a real implementation, this would save to database
+      // For now, just return success
+      return HttpResponse.json({
+        success: true,
+        message: 'Debt consolidation data saved successfully',
+        data: body.data
+      });
+    } catch (error) {
+      console.error('Error saving debt consolidation:', error);
+      return HttpResponse.json({
+        success: false,
+        message: 'Failed to save debt consolidation data'
+      }, {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
   }),
 
   // Reset the mock application state (for testing)
