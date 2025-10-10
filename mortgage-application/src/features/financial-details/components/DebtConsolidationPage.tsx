@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import {
   Box,
   Typography,
@@ -8,15 +8,7 @@ import {
   Paper,
   Divider,
   Container,
-  FormControl,
-  FormLabel,
-  RadioGroup,
-  Radio,
-  FormControlLabel,
-  Alert,
   CircularProgress,
-  Checkbox,
-  TextField,
 } from '@mui/material';
 
 import TubeStopStepper from '../../../components/common/TubeStopStepper';
@@ -26,6 +18,14 @@ import { updateFormData, markAsSaved, DebtConsolidationFormData } from '../slice
 import { RootState } from '../../../store';
 import { getApplicationId } from '../utils/applicationStorage';
 import { ArrowBack } from '@mui/icons-material';
+
+// Import field components
+import TotalCommitmentDisplay from './debt-consolidation/TotalCommitmentDisplay';
+import ReasonForConsolidationField from './debt-consolidation/ReasonForConsolidationField';
+import AdditionalInfoField from './debt-consolidation/AdditionalInfoField';
+import DifficultyPayingField from './debt-consolidation/DifficultyPayingField';
+import RenegotiationField from './debt-consolidation/RenegotiationField';
+import AttestationFields from './debt-consolidation/AttestationFields';
 
 interface DebtConsolidationPageProps {
   onBack?: () => void;
@@ -52,8 +52,8 @@ const DebtConsolidationPage: React.FC<DebtConsolidationPageProps> = ({ onBack, o
     .filter(commitment => commitment.includeInMortgage)
     .reduce((total, commitment) => total + (commitment.balance || 0), 0);
   
-  // React Hook Form setup with proper default values
-  const { control, handleSubmit, watch, setValue, formState: { errors } } = useForm<DebtConsolidationFormData>({
+  // React Hook Form setup with register instead of Controller
+  const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<DebtConsolidationFormData>({
     defaultValues: {
       totalCommitmentToBeRepaid: debtConsolidationState.formData.totalCommitmentToBeRepaid ?? 0,
       reasonForUsingNewMortgageToConsolidateDebt: debtConsolidationState.formData.reasonForUsingNewMortgageToConsolidateDebt ?? '',
@@ -208,164 +208,38 @@ const DebtConsolidationPage: React.FC<DebtConsolidationPageProps> = ({ onBack, o
           <Divider sx={{ mb: 3 }} />
 
           <form onSubmit={handleSubmit(onSubmit)}>
-            {/* Total commitment amount */}
-            <Box sx={{ mb: 3 }}>
-              <Typography variant="body1" sx={{ mb: 1, fontWeight: 'medium' }}>
-                Total commitments to be repaid using new mortgage
-              </Typography>
-              <Typography variant="h6" color="primary">
-                {formatCurrency(totalCommitmentAmount)}
-              </Typography>
-            </Box>
-
-            <Divider sx={{ mb: 3 }} />
+            {/* Total commitment display */}
+            <TotalCommitmentDisplay totalAmount={totalCommitmentAmount} />
 
             {/* Reason for consolidation */}
-            <Box sx={{ mb: 3 }}>
-              <FormControl component="fieldset">
-                <FormLabel component="legend" sx={{ mb: 2 }}>
-                  Reason for wanting to use the new mortgage to consolidate debt
-                </FormLabel>
-                <Controller
-                  name="reasonForUsingNewMortgageToConsolidateDebt"
-                  control={control}
-                  rules={{ required: 'Please select a reason' }}
-                  render={({ field }) => (
-                    <RadioGroup {...field}>
-                      <FormControlLabel
-                        value="Reduce monthly outgoings"
-                        control={<Radio />}
-                        label="Reduce monthly outgoings"
-                      />
-                      <FormControlLabel
-                        value="Reduce interest rate"
-                        control={<Radio />}
-                        label="Reduce interest rate"
-                      />
-                      <FormControlLabel
-                        value="Other"
-                        control={<Radio />}
-                        label="Another reason"
-                      />
-                    </RadioGroup>
-                  )}
-                />
-                {errors.reasonForUsingNewMortgageToConsolidateDebt && (
-                  <Typography color="error" variant="caption">
-                    {errors.reasonForUsingNewMortgageToConsolidateDebt.message}
-                  </Typography>
-                )}
-              </FormControl>
-            </Box>
+            <ReasonForConsolidationField register={register} errors={errors} />
 
             {/* Additional information */}
-            <Box sx={{ mb: 3 }}>
-              <Controller
-                name="reasonForConsolidateDesc"
-                control={control}
-                render={({ field }) => (
-                  <TextField
-                    {...field}
-                    fullWidth
-                    multiline
-                    rows={3}
-                    label="Please give more information"
-                    placeholder="Characters 0/1000"
-                    inputProps={{ maxLength: 1000 }}
-                    helperText={`${field.value?.length || 0}/1000 characters`}
-                  />
-                )}
-              />
-            </Box>
+            <AdditionalInfoField register={register} watch={watch} />
 
             {/* Difficulty paying question */}
-            <Box sx={{ mb: 3 }}>
-              <FormControl component="fieldset">
-                <FormLabel component="legend" sx={{ mb: 2 }}>
-                  Is the client having difficulty paying their existing financial commitments?
-                </FormLabel>
-                <Controller
-                  name="havingDifficultyPayingExistingFinancialCommitment"
-                  control={control}
-                  render={({ field }) => (
-                    <RadioGroup
-                      {...field}
-                      value={field.value ? 'Yes' : 'No'}
-                      onChange={(e) => field.onChange(e.target.value === 'Yes')}
-                    >
-                      <FormControlLabel value="Yes" control={<Radio />} label="Yes" />
-                      <FormControlLabel value="No" control={<Radio />} label="No" />
-                    </RadioGroup>
-                  )}
-                />
-              </FormControl>
-            </Box>
+            <DifficultyPayingField 
+              register={register} 
+              setValue={setValue}
+              value={havingDifficulty} 
+            />
 
             {/* Conditional renegotiation question */}
-            {havingDifficulty && (
-              <Box sx={{ mb: 3 }}>
-                <FormControl component="fieldset">
-                  <FormLabel component="legend" sx={{ mb: 2 }}>
-                    Have they considered renegotiating their payments with their creditors?
-                  </FormLabel>
-                  <Controller
-                    name="consideredRenegotiatingWithCreditors"
-                    control={control}
-                    render={({ field }) => (
-                      <RadioGroup
-                        {...field}
-                        value={field.value ? 'Yes' : 'No'}
-                        onChange={(e) => field.onChange(e.target.value === 'Yes')}
-                      >
-                        <FormControlLabel value="Yes" control={<Radio />} label="Yes" />
-                        <FormControlLabel value="No" control={<Radio />} label="No" />
-                      </RadioGroup>
-                    )}
-                  />
-                </FormControl>
-              </Box>
-            )}
+            <RenegotiationField
+              register={register}
+              setValue={setValue}
+              value={consideredRenegotiating}
+              isVisible={havingDifficulty}
+            />
 
             {/* Attestation checkboxes */}
-            <Box sx={{ mb: 3 }}>
-              <Controller
-                name="attestationClientUnderstandImplication"
-                control={control}
-                render={({ field }) => (
-                  <FormControlLabel
-                    control={
-                      <Checkbox
-                        {...field}
-                        checked={field.value || false}
-                        onChange={(e) => field.onChange(e.target.checked)}
-                      />
-                    }
-                    label="The client understands the implications of securing a previously unsecured debt and that there could be an additional cost if they take a lower rate over a longer term."
-                  />
-                )}
-              />
-            </Box>
-
-            {consideredRenegotiating && (
-              <Box sx={{ mb: 3 }}>
-                <Controller
-                  name="attestationClientConsideredRenegotiation"
-                  control={control}
-                  render={({ field }) => (
-                    <FormControlLabel
-                      control={
-                        <Checkbox
-                          {...field}
-                          checked={field.value || false}
-                          onChange={(e) => field.onChange(e.target.checked)}
-                        />
-                      }
-                      label="The client has considered renegotiating their payments with their creditors and is happy to proceed. They understand the implications of securing a previously unsecured debt and that there could be an additional cost if they take a lower rate over a longer term."
-                    />
-                  )}
-                />
-              </Box>
-            )}
+            <AttestationFields
+              register={register}
+              showFirstAttestation={havingDifficulty}
+              showSecondAttestation={havingDifficulty && consideredRenegotiating}
+              firstAttestationValue={watch('attestationClientUnderstandImplication')}
+              secondAttestationValue={watch('attestationClientConsideredRenegotiation')}
+            />
 
           </form>
 
