@@ -48,7 +48,7 @@ export const useFinancialCommitments = () => {
       dispatch(setCommitments(apiCommitments));
     }
   }, [apiCommitments, dispatch]);
-
+console.log(initialCommitmentsRef.current, 'initialCommitmentsRef.current')
   // Check if commitments have changed
   useEffect(() => {
     if (initialCommitmentsRef.current) {

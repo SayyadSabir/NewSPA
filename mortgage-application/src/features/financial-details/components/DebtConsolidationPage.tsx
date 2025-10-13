@@ -189,9 +189,9 @@ const DebtConsolidationPage: React.FC<DebtConsolidationPageProps> = ({ onBack, o
           <Button
             startIcon={<ArrowBack />}
             sx={{ mr: 2 }}
-            onClick={handleSaveAndReturn}
+            onClick={handleBack}
           >
-            Financial details
+            Back to Financial commitments
           </Button>
         </Box>
 

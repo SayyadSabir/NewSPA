@@ -113,12 +113,12 @@ const sampleApi =
 // Helper function to get commitments based on application ID
 const getCommitmentsByApplicationId = (applicationId?: string) => {
   // If it's a resume case and we have an application ID, return sample API commitments (raw format)
-  if (applicationId && getIsResumeCase()) {
-    return {
-      ...sampleApi,
-      "debt-consolidation": false
-    };
-  }
+  // if (applicationId && getIsResumeCase()) {
+  //   return {
+  //     ...sampleApi,
+  //     "debt-consolidation": false
+  //   };
+  // }
   // Otherwise return empty structure for new case
   return {
     "application-summary": {

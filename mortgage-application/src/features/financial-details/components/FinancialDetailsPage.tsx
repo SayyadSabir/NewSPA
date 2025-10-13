@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Box,
   Typography,
@@ -16,7 +16,7 @@ import {
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import TubeStopStepper from '../../../components/common/TubeStopStepper';
-import CommitmentForm from './CommitmentForm';
+import CommitmentForm, { CommitmentFormRef } from './CommitmentForm';
 import CommitmentsList from './CommitmentsList';
 import { FinancialCommitment } from '../types';
 import { useFinancialCommitments } from '../hooks/useFinancialCommitments';
@@ -36,6 +36,11 @@ const FinancialDetailsPage: React.FC<FinancialDetailsPageProps> = ({ onNext, onS
   const [hasCommitments, setHasCommitments] = useState<boolean | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [editingCommitment, setEditingCommitment] = useState<FinancialCommitment | null>(null);
+  const [validationError, setValidationError] = useState<string | null>(null);
+  
+  // Refs for form validation
+  const addFormRef = useRef<CommitmentFormRef>(null);
+  const editFormRef = useRef<CommitmentFormRef>(null);
   
   // Use our custom hook for financial commitments
   const { 
@@ -57,7 +62,8 @@ const FinancialDetailsPage: React.FC<FinancialDetailsPageProps> = ({ onNext, onS
   // Handle adding a new commitment
   const handleAddCommitment = (commitment: Omit<FinancialCommitment, 'id'>) => {
     addCommitment(commitment);
-    setShowForm(false);
+    // Don't close the form - let user add another commitment
+    // Form will reset itself after submission
   };
 
   // Handle updating an existing commitment
@@ -80,6 +86,27 @@ const FinancialDetailsPage: React.FC<FinancialDetailsPageProps> = ({ onNext, onS
 
   // Handle saving and proceeding to next step
   const handleNext = async () => {
+    // Check if there's an open form that needs validation
+    if (showForm || editingCommitment) {
+      const formRef = showForm ? addFormRef : editFormRef;
+      const isValid = await formRef.current?.validateForm();
+      
+      if (!isValid) {
+        setValidationError('Please fill in all required fields before proceeding.');
+        return;
+      }
+      
+      // Check if form has unsaved changes
+      const hasUnsavedChanges = formRef.current?.hasUnsavedChanges();
+      if (hasUnsavedChanges) {
+        setValidationError('Please save or cancel the current commitment before proceeding.');
+        return;
+      }
+    }
+    
+    // Clear any validation errors
+    setValidationError(null);
+    
     // If no changes, proceed without API call
     if (!formModified) {
       if (onNext) {
@@ -98,6 +125,27 @@ const FinancialDetailsPage: React.FC<FinancialDetailsPageProps> = ({ onNext, onS
 
   // Handle saving and returning to overview
   const handleSaveAndReturn = async () => {
+    // Check if there's an open form that needs validation
+    if (showForm || editingCommitment) {
+      const formRef = showForm ? addFormRef : editFormRef;
+      const isValid = await formRef.current?.validateForm();
+      
+      if (!isValid) {
+        setValidationError('Please fill in all required fields before saving.');
+        return;
+      }
+      
+      // Check if form has unsaved changes
+      const hasUnsavedChanges = formRef.current?.hasUnsavedChanges();
+      if (hasUnsavedChanges) {
+        setValidationError('Please save or cancel the current commitment before returning.');
+        return;
+      }
+    }
+    
+    // Clear any validation errors
+    setValidationError(null);
+    
     // If no changes, return without API call
     if (!formModified) {
       // Navigate back to overview without saving
@@ -171,7 +219,14 @@ const FinancialDetailsPage: React.FC<FinancialDetailsPageProps> = ({ onNext, onS
               <RadioGroup
                 row
                 value={hasCommitments === null ? '' : hasCommitments ? 'yes' : 'no'}
-                onChange={(e) => setHasCommitments(e.target.value === 'yes')}
+                onChange={(e) => {
+                  const hasCommitmentsValue = e.target.value === 'yes';
+                  setHasCommitments(hasCommitmentsValue);
+                  // Automatically show form when user selects 'Yes' and no commitments exist
+                  if (hasCommitmentsValue && commitments.length === 0) {
+                    setShowForm(true);
+                  }
+                }}
               >
                 <FormControlLabel value="yes" control={<Radio />} label="Yes" />
                 <FormControlLabel value="no" control={<Radio />} label="No" />
@@ -201,8 +256,15 @@ const FinancialDetailsPage: React.FC<FinancialDetailsPageProps> = ({ onNext, onS
                     </Box>
                   )}
 
+                  {validationError && (
+                    <Alert severity="error" sx={{ mb: 3 }} onClose={() => setValidationError(null)}>
+                      {validationError}
+                    </Alert>
+                  )}
+
                   {editingCommitment ? (
                     <CommitmentForm
+                      ref={editFormRef}
                       existingCommitment={editingCommitment}
                       onUpdateCommitment={handleUpdateCommitment}
                       onAddCommitment={handleAddCommitment}
@@ -210,10 +272,12 @@ const FinancialDetailsPage: React.FC<FinancialDetailsPageProps> = ({ onNext, onS
                     />
                   ) : showForm ? (
                     <CommitmentForm
+                      ref={addFormRef}
                       onAddCommitment={handleAddCommitment}
                       onCancel={() => setShowForm(false)}
+                      currentCommitmentCount={commitments.length}
                     />
-                  ) : (
+                  ) : commitments.length > 0 ? (
                     <Box sx={{ mt: 3 }}>
                       <Button
                         variant="contained"
@@ -229,7 +293,7 @@ const FinancialDetailsPage: React.FC<FinancialDetailsPageProps> = ({ onNext, onS
                         </Typography>
                       )}
                     </Box>
-                  )}
+                  ) : null}
                 </>
               )}
             </>
@@ -247,7 +311,6 @@ const FinancialDetailsPage: React.FC<FinancialDetailsPageProps> = ({ onNext, onS
               variant="contained" 
               color="primary" 
               onClick={handleNext}
-              disabled={isSaving || (hasCommitments && commitments.length === 0)}
             >
               {isSaving ? <CircularProgress size={24} /> : 'Next'}
             </Button>

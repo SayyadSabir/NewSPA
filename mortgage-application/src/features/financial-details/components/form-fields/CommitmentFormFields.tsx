@@ -132,6 +132,7 @@ export const MonthlyPaymentField: React.FC<FormFieldProps> = ({ register, errors
     <Grid item xs={12} md={6}>
       <TextField
         {...register("monthlyPayment", { 
+          required: 'Monthly payment is required',
           min: { value: 0, message: 'Monthly payment must be at least 0' }
         })}
         label={fieldConfig.labels.monthlyPayment || 'Monthly payment (£)'}
