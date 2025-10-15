@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode } from "react";
 
 // Define the step enum in a separate file for better reusability
 export enum FinancialDetailsStep {
@@ -13,7 +13,9 @@ interface NavigationContextType {
   navigateToStep: (step: FinancialDetailsStep) => void;
 }
 
-const NavigationContext = createContext<NavigationContextType | undefined>(undefined);
+const NavigationContext = createContext<NavigationContextType | undefined>(
+  undefined
+);
 
 interface NavigationProviderProps {
   initialStep?: FinancialDetailsStep;
@@ -24,7 +26,8 @@ export const NavigationProvider: React.FC<NavigationProviderProps> = ({
   initialStep = FinancialDetailsStep.FINANCIAL_COMMITMENTS,
   children,
 }) => {
-  const [currentStep, setCurrentStep] = useState<FinancialDetailsStep>(initialStep);
+  const [currentStep, setCurrentStep] =
+    useState<FinancialDetailsStep>(initialStep);
 
   const navigateToNext = () => {
     setCurrentStep((prevStep) => {
@@ -68,7 +71,7 @@ export const NavigationProvider: React.FC<NavigationProviderProps> = ({
 export const useNavigation = (): NavigationContextType => {
   const context = useContext(NavigationContext);
   if (context === undefined) {
-    throw new Error('useNavigation must be used within a NavigationProvider');
+    throw new Error("useNavigation must be used within a NavigationProvider");
   }
   return context;
 };

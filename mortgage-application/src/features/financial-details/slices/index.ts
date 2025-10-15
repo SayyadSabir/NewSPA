@@ -1,6 +1,6 @@
-import { combineReducers } from '@reduxjs/toolkit';
-import financialCommitmentsReducer from './financialCommitmentsSlice';
-import { financialDetailsApi } from '../api/financialDetailsApi';
+import { combineReducers } from "@reduxjs/toolkit";
+import financialCommitmentsReducer from "./financialCommitmentsSlice";
+import { financialDetailsApi } from "../api/financialDetailsApi";
 
 export const financialDetailsReducers = {
   financialCommitments: financialCommitmentsReducer,

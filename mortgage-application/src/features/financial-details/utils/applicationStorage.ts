@@ -3,12 +3,12 @@
  */
 
 // Storage keys
-const APP_ID_KEY = 'mortgage_application_id';
+const APP_ID_KEY = "mortgage_application_id";
 
 // For testing purposes, we'll use a fixed application ID
 // In a real application, this would be generated or retrieved from a backend
 // Set this to empty string for new case, or a valid ID for resume case
-const TEST_APPLICATION_ID = 'qwqwqwqwqw';
+const TEST_APPLICATION_ID = "qwqwqwqwqw";
 
 /**
  * Get the current application ID from local storage
@@ -18,7 +18,7 @@ export const getApplicationId = (): string | null => {
   try {
     return localStorage.getItem(APP_ID_KEY) || TEST_APPLICATION_ID;
   } catch (error) {
-    console.error('Error accessing local storage:', error);
+    console.error("Error accessing local storage:", error);
     return TEST_APPLICATION_ID;
   }
 };
@@ -31,7 +31,7 @@ export const saveApplicationId = (id: string): void => {
   try {
     localStorage.setItem(APP_ID_KEY, id);
   } catch (error) {
-    console.error('Error saving to local storage:', error);
+    console.error("Error saving to local storage:", error);
   }
 };
 
@@ -53,6 +53,6 @@ export const resetApplicationState = (): void => {
   try {
     localStorage.removeItem(APP_ID_KEY);
   } catch (error) {
-    console.error('Error resetting application state:', error);
+    console.error("Error resetting application state:", error);
   }
 };

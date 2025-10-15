@@ -1,5 +1,5 @@
-import React from 'react';
-import { UseFormRegister, UseFormWatch, FieldErrors } from 'react-hook-form';
+import React from "react";
+import { UseFormRegister, UseFormWatch, FieldErrors } from "react-hook-form";
 import {
   TextField,
   Grid,
@@ -7,9 +7,9 @@ import {
   CircularProgress,
   Box,
   Typography,
-} from '@mui/material';
-import { usePersonalDetailsValidation } from '../../hooks/usePersonalDetailsValidation';
-import { FieldConfig } from './CommitmentFieldConfig';
+} from "@mui/material";
+import { usePersonalDetailsValidation } from "../../hooks/usePersonalDetailsValidation";
+import { FieldConfig } from "./CommitmentFieldConfig";
 
 interface RetirementAgeFieldProps {
   register: UseFormRegister<any>;
@@ -18,16 +18,20 @@ interface RetirementAgeFieldProps {
   fieldConfig?: FieldConfig;
 }
 
-export const RetirementAgeField: React.FC<RetirementAgeFieldProps> = ({ register, errors }) => {
-  const { validateRetirementAge, isLoading, maxRetirementAge } = usePersonalDetailsValidation();
+export const RetirementAgeField: React.FC<RetirementAgeFieldProps> = ({
+  register,
+  errors,
+}) => {
+  const { validateRetirementAge, isLoading, maxRetirementAge } =
+    usePersonalDetailsValidation();
 
   return (
     <Grid item xs={12} md={6}>
       <TextField
         {...register("retirementAge", {
-          required: 'Retirement age is required',
-          min: { value: 55, message: 'Retirement age must be at least 55' },
-          validate: validateRetirementAge
+          required: "Retirement age is required",
+          min: { value: 55, message: "Retirement age must be at least 55" },
+          validate: validateRetirementAge,
         })}
         label="Retirement Age"
         type="number"
@@ -36,16 +40,15 @@ export const RetirementAgeField: React.FC<RetirementAgeFieldProps> = ({ register
         helperText={errors.retirementAge?.message?.toString()}
         disabled={isLoading}
         InputProps={{
-          endAdornment: isLoading ? (
-            <CircularProgress size={20} />
-          ) : null,
+          endAdornment: isLoading ? <CircularProgress size={20} /> : null,
         }}
       />
       {maxRetirementAge !== null && !errors.retirementAge && (
         <FormHelperText>
-          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+          <Box sx={{ display: "flex", alignItems: "center" }}>
             <Typography variant="caption" color="textSecondary">
-              Maximum retirement age based on your date of birth: {maxRetirementAge}
+              Maximum retirement age based on your date of birth:{" "}
+              {maxRetirementAge}
             </Typography>
           </Box>
         </FormHelperText>

@@ -1,5 +1,5 @@
-import React from 'react';
-import { UseFormRegister, UseFormSetValue } from 'react-hook-form';
+import React from "react";
+import { UseFormRegister, UseFormSetValue } from "react-hook-form";
 import {
   Box,
   FormControl,
@@ -7,8 +7,8 @@ import {
   RadioGroup,
   Radio,
   FormControlLabel,
-} from '@mui/material';
-import { DebtConsolidationFormData } from '../../slices/debtConsolidationSlice';
+} from "@mui/material";
+import { DebtConsolidationFormData } from "../../slices/debtConsolidationSlice";
 
 interface DifficultyPayingFieldProps {
   register: UseFormRegister<DebtConsolidationFormData>;
@@ -22,29 +22,22 @@ const DifficultyPayingField: React.FC<DifficultyPayingFieldProps> = ({
   value,
 }) => {
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setValue('havingDifficultyPayingExistingFinancialCommitment', event.target.value === 'Yes');
+    setValue(
+      "havingDifficultyPayingExistingFinancialCommitment",
+      event.target.value === "Yes"
+    );
   };
 
   return (
     <Box sx={{ mb: 3 }}>
       <FormControl component="fieldset">
         <FormLabel component="legend" sx={{ mb: 2 }}>
-          Is the client having difficulty paying their existing financial commitments?
+          Is the client having difficulty paying their existing financial
+          commitments?
         </FormLabel>
-        <RadioGroup
-          value={value ? 'Yes' : 'No'}
-          onChange={handleChange}
-        >
-          <FormControlLabel
-            value="Yes"
-            control={<Radio />}
-            label="Yes"
-          />
-          <FormControlLabel
-            value="No"
-            control={<Radio />}
-            label="No"
-          />
+        <RadioGroup value={value ? "Yes" : "No"} onChange={handleChange}>
+          <FormControlLabel value="Yes" control={<Radio />} label="Yes" />
+          <FormControlLabel value="No" control={<Radio />} label="No" />
         </RadioGroup>
       </FormControl>
     </Box>

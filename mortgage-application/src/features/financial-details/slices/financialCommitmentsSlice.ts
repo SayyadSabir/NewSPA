@@ -1,7 +1,7 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { v4 as uuidv4 } from 'uuid';
-import { FinancialCommitment } from '../types';
-import { financialDetailsApi } from '../api/financialDetailsApi';
+import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { v4 as uuidv4 } from "uuid";
+import { FinancialCommitment } from "../types";
+import { financialDetailsApi } from "../api/financialDetailsApi";
 
 // Re-export the state type for use in the store
 export interface FinancialCommitmentsState {
@@ -17,10 +17,13 @@ const initialState: FinancialCommitmentsState = {
 };
 
 const financialCommitmentsSlice = createSlice({
-  name: 'financialCommitments',
+  name: "financialCommitments",
   initialState,
   reducers: {
-    addCommitment: (state, action: PayloadAction<Omit<FinancialCommitment, 'id'>>) => {
+    addCommitment: (
+      state,
+      action: PayloadAction<Omit<FinancialCommitment, "id">>
+    ) => {
       const newCommitment = {
         ...action.payload,
         id: uuidv4(),
@@ -64,13 +67,17 @@ const financialCommitmentsSlice = createSlice({
         financialDetailsApi.endpoints.getFinancialCommitments.matchRejected,
         (state, action) => {
           state.isLoading = false;
-          state.error = action.error.message || 'Failed to fetch commitments';
+          state.error = action.error.message || "Failed to fetch commitments";
         }
       );
   },
 });
 
-export const { addCommitment, updateCommitment, removeCommitment, setCommitments } =
-  financialCommitmentsSlice.actions;
+export const {
+  addCommitment,
+  updateCommitment,
+  removeCommitment,
+  setCommitments,
+} = financialCommitmentsSlice.actions;
 
 export default financialCommitmentsSlice.reducer;

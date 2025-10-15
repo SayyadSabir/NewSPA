@@ -1,7 +1,7 @@
-import React from 'react';
-import { UseFormRegister, UseFormWatch } from 'react-hook-form';
-import { Box, TextField } from '@mui/material';
-import { DebtConsolidationFormData } from '../../slices/debtConsolidationSlice';
+import React from "react";
+import { UseFormRegister, UseFormWatch } from "react-hook-form";
+import { Box, TextField } from "@mui/material";
+import { DebtConsolidationFormData } from "../../slices/debtConsolidationSlice";
 
 interface AdditionalInfoFieldProps {
   register: UseFormRegister<DebtConsolidationFormData>;
@@ -12,12 +12,12 @@ const AdditionalInfoField: React.FC<AdditionalInfoFieldProps> = ({
   register,
   watch,
 }) => {
-  const reasonDesc = watch('reasonForConsolidateDesc');
+  const reasonDesc = watch("reasonForConsolidateDesc");
 
   return (
     <Box sx={{ mb: 3 }}>
       <TextField
-        {...register('reasonForConsolidateDesc')}
+        {...register("reasonForConsolidateDesc")}
         fullWidth
         multiline
         rows={3}

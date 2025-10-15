@@ -1,5 +1,5 @@
-import React from 'react';
-import { UseFormRegister, FieldErrors } from 'react-hook-form';
+import React from "react";
+import { UseFormRegister, FieldErrors } from "react-hook-form";
 import {
   Box,
   FormControl,
@@ -8,18 +8,17 @@ import {
   Radio,
   FormControlLabel,
   Typography,
-} from '@mui/material';
-import { DebtConsolidationFormData } from '../../slices/debtConsolidationSlice';
+} from "@mui/material";
+import { DebtConsolidationFormData } from "../../slices/debtConsolidationSlice";
 
 interface ReasonForConsolidationFieldProps {
   register: UseFormRegister<DebtConsolidationFormData>;
   errors: FieldErrors<DebtConsolidationFormData>;
 }
 
-const ReasonForConsolidationField: React.FC<ReasonForConsolidationFieldProps> = ({
-  register,
-  errors,
-}) => {
+const ReasonForConsolidationField: React.FC<
+  ReasonForConsolidationFieldProps
+> = ({ register, errors }) => {
   return (
     <Box sx={{ mb: 3 }}>
       <FormControl component="fieldset">
@@ -27,8 +26,8 @@ const ReasonForConsolidationField: React.FC<ReasonForConsolidationFieldProps> = 
           Reason for wanting to use the new mortgage to consolidate debt
         </FormLabel>
         <RadioGroup
-          {...register('reasonForUsingNewMortgageToConsolidateDebt', {
-            required: 'Please select a reason',
+          {...register("reasonForUsingNewMortgageToConsolidateDebt", {
+            required: "Please select a reason",
           })}
         >
           <FormControlLabel

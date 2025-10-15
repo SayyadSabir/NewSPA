@@ -7,7 +7,7 @@ const Page1: React.FC = () => {
   const navigate = useNavigate();
 
   // Enable navigation control to prevent browser back button
-    useNavigationControl(true);
+  useNavigationControl(true);
 
   return (
     <Box sx={{ p: 4, maxWidth: 800, mx: "auto", mt: 4 }}>
@@ -19,16 +19,16 @@ const Page1: React.FC = () => {
           This is the first page of the navigation test.
         </Typography>
         <Box sx={{ mt: 3, display: "flex", gap: 2 }}>
-          <Button 
-            variant="contained" 
-            color="primary" 
+          <Button
+            variant="contained"
+            color="primary"
             onClick={() => navigate("/test/page2")}
           >
             Go to Page 2
           </Button>
-          <Button 
-            variant="contained" 
-            color="primary" 
+          <Button
+            variant="contained"
+            color="primary"
             onClick={() => navigate("/test/page3")}
           >
             Go to Page 3

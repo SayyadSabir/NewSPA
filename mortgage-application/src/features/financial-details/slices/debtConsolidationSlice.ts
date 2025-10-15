@@ -1,4 +1,4 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 // Form data interface (camelCase for React Hook Form)
 export interface DebtConsolidationFormData {
@@ -32,10 +32,13 @@ const initialState: DebtConsolidationState = {
 };
 
 const debtConsolidationSlice = createSlice({
-  name: 'debtConsolidation',
+  name: "debtConsolidation",
   initialState,
   reducers: {
-    updateFormData: (state, action: PayloadAction<Partial<DebtConsolidationFormData>>) => {
+    updateFormData: (
+      state,
+      action: PayloadAction<Partial<DebtConsolidationFormData>>
+    ) => {
       state.formData = { ...state.formData, ...action.payload };
       state.hasUnsavedChanges = true;
     },

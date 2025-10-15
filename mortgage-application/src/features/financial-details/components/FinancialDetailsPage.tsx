@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from "react";
 import {
   Box,
   Typography,
@@ -13,13 +13,13 @@ import {
   FormControlLabel,
   Alert,
   CircularProgress,
-} from '@mui/material';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import TubeStopStepper from '../../../components/common/TubeStopStepper';
-import CommitmentForm, { CommitmentFormRef } from './CommitmentForm';
-import CommitmentsList from './CommitmentsList';
-import { FinancialCommitment } from '../types';
-import { useFinancialCommitments } from '../hooks/useFinancialCommitments';
+} from "@mui/material";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import TubeStopStepper from "../../../components/common/TubeStopStepper";
+import CommitmentForm, { CommitmentFormRef } from "./CommitmentForm";
+import CommitmentsList from "./CommitmentsList";
+import { FinancialCommitment } from "../types";
+import { useFinancialCommitments } from "../hooks/useFinancialCommitments";
 // No longer using NavigationContext
 
 interface FinancialDetailsPageProps {
@@ -27,25 +27,29 @@ interface FinancialDetailsPageProps {
   onSaveAndReturn?: () => void;
 }
 
-const FinancialDetailsPage: React.FC<FinancialDetailsPageProps> = ({ onNext, onSaveAndReturn }) => {
+const FinancialDetailsPage: React.FC<FinancialDetailsPageProps> = ({
+  onNext,
+  onSaveAndReturn,
+}) => {
   // We're on the first step of the stepper
   const activeStep = 0;
-  
+
   // Log the activeStep for debugging
-  console.log('FinancialDetailsPage - activeStep:', activeStep);
+  console.log("FinancialDetailsPage - activeStep:", activeStep);
   const [hasCommitments, setHasCommitments] = useState<boolean | null>(null);
   const [showForm, setShowForm] = useState(false);
-  const [editingCommitment, setEditingCommitment] = useState<FinancialCommitment | null>(null);
+  const [editingCommitment, setEditingCommitment] =
+    useState<FinancialCommitment | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
-  
+
   // Refs for form validation
   const addFormRef = useRef<CommitmentFormRef>(null);
   const editFormRef = useRef<CommitmentFormRef>(null);
-  
+
   // Use our custom hook for financial commitments
-  const { 
-    commitments, 
-    isLoading: isLoadingCommitments, 
+  const {
+    commitments,
+    isLoading: isLoadingCommitments,
     isSaving,
     error: fetchError,
     saveCommitments,
@@ -53,14 +57,14 @@ const FinancialDetailsPage: React.FC<FinancialDetailsPageProps> = ({ onNext, onS
     addCommitment,
     removeCommitment,
     refetch,
-    formModified
+    formModified,
   } = useFinancialCommitments();
 
   // Steps for the tube stop stepper
-  const steps = ['Financial commitments', 'Debt consolidation'];
+  const steps = ["Financial commitments", "Debt consolidation"];
 
   // Handle adding a new commitment
-  const handleAddCommitment = (commitment: Omit<FinancialCommitment, 'id'>) => {
+  const handleAddCommitment = (commitment: Omit<FinancialCommitment, "id">) => {
     addCommitment(commitment);
     // Don't close the form - let user add another commitment
     // Form will reset itself after submission
@@ -90,23 +94,27 @@ const FinancialDetailsPage: React.FC<FinancialDetailsPageProps> = ({ onNext, onS
     if (showForm || editingCommitment) {
       const formRef = showForm ? addFormRef : editFormRef;
       const isValid = await formRef.current?.validateForm();
-      
+
       if (!isValid) {
-        setValidationError('Please fill in all required fields before proceeding.');
+        setValidationError(
+          "Please fill in all required fields before proceeding."
+        );
         return;
       }
-      
+
       // Check if form has unsaved changes
       const hasUnsavedChanges = formRef.current?.hasUnsavedChanges();
       if (hasUnsavedChanges) {
-        setValidationError('Please save or cancel the current commitment before proceeding.');
+        setValidationError(
+          "Please save or cancel the current commitment before proceeding."
+        );
         return;
       }
     }
-    
+
     // Clear any validation errors
     setValidationError(null);
-    
+
     // If no changes, proceed without API call
     if (!formModified) {
       if (onNext) {
@@ -114,7 +122,7 @@ const FinancialDetailsPage: React.FC<FinancialDetailsPageProps> = ({ onNext, onS
       }
       return;
     }
-    
+
     const success = await saveCommitments();
     if (success) {
       if (onNext) {
@@ -129,23 +137,25 @@ const FinancialDetailsPage: React.FC<FinancialDetailsPageProps> = ({ onNext, onS
     if (showForm || editingCommitment) {
       const formRef = showForm ? addFormRef : editFormRef;
       const isValid = await formRef.current?.validateForm();
-      
+
       if (!isValid) {
-        setValidationError('Please fill in all required fields before saving.');
+        setValidationError("Please fill in all required fields before saving.");
         return;
       }
-      
+
       // Check if form has unsaved changes
       const hasUnsavedChanges = formRef.current?.hasUnsavedChanges();
       if (hasUnsavedChanges) {
-        setValidationError('Please save or cancel the current commitment before returning.');
+        setValidationError(
+          "Please save or cancel the current commitment before returning."
+        );
         return;
       }
     }
-    
+
     // Clear any validation errors
     setValidationError(null);
-    
+
     // If no changes, return without API call
     if (!formModified) {
       // Navigate back to overview without saving
@@ -154,7 +164,7 @@ const FinancialDetailsPage: React.FC<FinancialDetailsPageProps> = ({ onNext, onS
       }
       return;
     }
-    
+
     const success = await saveCommitments();
     if (success && onSaveAndReturn) {
       onSaveAndReturn();
@@ -164,7 +174,7 @@ const FinancialDetailsPage: React.FC<FinancialDetailsPageProps> = ({ onNext, onS
   return (
     <Container maxWidth="md">
       <Box sx={{ py: 4 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+        <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
           <Button
             startIcon={<ArrowBackIcon />}
             sx={{ mr: 2 }}
@@ -191,36 +201,61 @@ const FinancialDetailsPage: React.FC<FinancialDetailsPageProps> = ({ onNext, onS
               What financial commitments to include
             </Typography>
             <Box component="ul" sx={{ pl: 4 }}>
-              <Typography component="li">Buy now, pay later instalments</Typography>
+              <Typography component="li">
+                Buy now, pay later instalments
+              </Typography>
               <Typography component="li">Catalogue instalments</Typography>
               <Typography component="li">Childcare or school fees</Typography>
               <Typography component="li">Credit agreement</Typography>
-              <Typography component="li">Credit card, store card or revolving finance (including any repaid in the last 60 days)</Typography>
-              <Typography component="li">Guarantor on existing borrowing</Typography>
-              <Typography component="li">Guarantor on rental agreement</Typography>
-              <Typography component="li">Hire purchase (HP) or personal contract purchase (PCP)</Typography>
-              <Typography component="li">Maintenance for ex-partner or child</Typography>
+              <Typography component="li">
+                Credit card, store card or revolving finance (including any
+                repaid in the last 60 days)
+              </Typography>
+              <Typography component="li">
+                Guarantor on existing borrowing
+              </Typography>
+              <Typography component="li">
+                Guarantor on rental agreement
+              </Typography>
+              <Typography component="li">
+                Hire purchase (HP) or personal contract purchase (PCP)
+              </Typography>
+              <Typography component="li">
+                Maintenance for ex-partner or child
+              </Typography>
               <Typography component="li">Overdraft</Typography>
-              <Typography component="li">Overdraft secured against investment portfolio</Typography>
-              <Typography component="li">Personal loan or point-of-sale finance (including any repaid in the last 60 days)</Typography>
+              <Typography component="li">
+                Overdraft secured against investment portfolio
+              </Typography>
+              <Typography component="li">
+                Personal loan or point-of-sale finance (including any repaid in
+                the last 60 days)
+              </Typography>
               <Typography component="li">Secured personal loan</Typography>
-              <Typography component="li">Shared equity loan for another property</Typography>
+              <Typography component="li">
+                Shared equity loan for another property
+              </Typography>
               <Typography component="li">Student loan</Typography>
               <Typography component="li">Other regular payments</Typography>
             </Box>
-            <Typography variant="body2" sx={{ fontStyle: 'italic', mt: 2 }}>
-              Don't include salary sacrifice commitments – these are only needed when completing a full application.
+            <Typography variant="body2" sx={{ fontStyle: "italic", mt: 2 }}>
+              Don't include salary sacrifice commitments – these are only needed
+              when completing a full application.
             </Typography>
           </Box>
 
           <Box sx={{ mb: 4 }}>
             <FormControl component="fieldset">
-              <FormLabel component="legend">Does your client have any financial commitments?</FormLabel>
+              <FormLabel component="legend">
+                Does your client have any financial commitments?
+              </FormLabel>
               <RadioGroup
                 row
-                value={hasCommitments === null ? '' : hasCommitments ? 'yes' : 'no'}
+                value={
+                  hasCommitments === null ? "" : hasCommitments ? "yes" : "no"
+                }
                 onChange={(e) => {
-                  const hasCommitmentsValue = e.target.value === 'yes';
+                  const hasCommitmentsValue = e.target.value === "yes";
                   setHasCommitments(hasCommitmentsValue);
                   // Automatically show form when user selects 'Yes' and no commitments exist
                   if (hasCommitmentsValue && commitments.length === 0) {
@@ -237,7 +272,7 @@ const FinancialDetailsPage: React.FC<FinancialDetailsPageProps> = ({ onNext, onS
           {hasCommitments && (
             <>
               {isLoadingCommitments ? (
-                <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
+                <Box sx={{ display: "flex", justifyContent: "center", my: 4 }}>
                   <CircularProgress />
                 </Box>
               ) : fetchError ? (
@@ -257,7 +292,11 @@ const FinancialDetailsPage: React.FC<FinancialDetailsPageProps> = ({ onNext, onS
                   )}
 
                   {validationError && (
-                    <Alert severity="error" sx={{ mb: 3 }} onClose={() => setValidationError(null)}>
+                    <Alert
+                      severity="error"
+                      sx={{ mb: 3 }}
+                      onClose={() => setValidationError(null)}
+                    >
                       {validationError}
                     </Alert>
                   )}
@@ -288,7 +327,11 @@ const FinancialDetailsPage: React.FC<FinancialDetailsPageProps> = ({ onNext, onS
                         Add another commitment
                       </Button>
                       {commitments.length >= 5 && (
-                        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
+                        <Typography
+                          variant="caption"
+                          color="text.secondary"
+                          sx={{ display: "block", mt: 1 }}
+                        >
                           Maximum of 5 commitments reached
                         </Typography>
                       )}
@@ -299,20 +342,16 @@ const FinancialDetailsPage: React.FC<FinancialDetailsPageProps> = ({ onNext, onS
             </>
           )}
 
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 4 }}>
-            <Button 
-              variant="outlined" 
+          <Box sx={{ display: "flex", justifyContent: "space-between", mt: 4 }}>
+            <Button
+              variant="outlined"
               onClick={handleSaveAndReturn}
               disabled={isSaving}
             >
               Save and return to overview
             </Button>
-            <Button 
-              variant="contained" 
-              color="primary" 
-              onClick={handleNext}
-            >
-              {isSaving ? <CircularProgress size={24} /> : 'Next'}
+            <Button variant="contained" color="primary" onClick={handleNext}>
+              {isSaving ? <CircularProgress size={24} /> : "Next"}
             </Button>
           </Box>
         </Paper>

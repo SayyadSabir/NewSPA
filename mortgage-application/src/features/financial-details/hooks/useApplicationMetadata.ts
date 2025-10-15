@@ -1,6 +1,9 @@
-import { useSelector } from 'react-redux';
-import { RootState } from '../../../store';
-import { ApplicantSummary, ApplicationSummary } from '../slices/applicationMetadataSlice';
+import { useSelector } from "react-redux";
+import { RootState } from "../../../store";
+import {
+  ApplicantSummary,
+  ApplicationSummary,
+} from "../slices/applicationMetadataSlice";
 
 export interface UseApplicationMetadataReturn {
   applicantSummary: ApplicantSummary[];
@@ -20,9 +23,13 @@ export const useApplicationMetadata = (): UseApplicationMetadataReturn => {
 /**
  * Hook to get a specific applicant by ID
  */
-export const useApplicantById = (applicantId: string): ApplicantSummary | undefined => {
+export const useApplicantById = (
+  applicantId: string
+): ApplicantSummary | undefined => {
   const { applicantSummary } = useApplicationMetadata();
-  return applicantSummary.find(applicant => applicant['applicant-id'] === applicantId);
+  return applicantSummary.find(
+    (applicant) => applicant["applicant-id"] === applicantId
+  );
 };
 
 /**

@@ -3,18 +3,20 @@ import ReactDOM from "react-dom";
 import singleSpaReact from "single-spa-react";
 import Root from "./root.component";
 
-
 const lifecycles = singleSpaReact({
   React,
   ReactDOM,
   rootComponent: Root,
   errorBoundary(err, info, props) {
     // Customize the root error boundary for your microfrontend here.
-    console.error('Error in Mortgage Application MFE:', err, info);
+    console.error("Error in Mortgage Application MFE:", err, info);
     return (
-      <div style={{ color: 'red', padding: '20px' }}>
+      <div style={{ color: "red", padding: "20px" }}>
         <h2>Something went wrong with the Mortgage Application</h2>
-        <p>Please try refreshing the page or contact support if the issue persists.</p>
+        <p>
+          Please try refreshing the page or contact support if the issue
+          persists.
+        </p>
       </div>
     );
   },

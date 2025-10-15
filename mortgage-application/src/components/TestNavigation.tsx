@@ -13,22 +13,22 @@ const TestNavigation: React.FC = () => {
           Test Navigation
         </Typography>
         <Box sx={{ display: "flex", gap: 2 }}>
-          <Button 
-            color="primary" 
+          <Button
+            color="primary"
             variant={location.pathname === "/test/page1" ? "contained" : "text"}
             onClick={() => navigate("/test/page1")}
           >
             Page 1
           </Button>
-          <Button 
-            color="primary" 
+          <Button
+            color="primary"
             variant={location.pathname === "/test/page2" ? "contained" : "text"}
             onClick={() => navigate("/test/page2")}
           >
             Page 2
           </Button>
-          <Button 
-            color="primary" 
+          <Button
+            color="primary"
             variant={location.pathname === "/test/page3" ? "contained" : "text"}
             onClick={() => navigate("/test/page3")}
           >

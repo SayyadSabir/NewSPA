@@ -6,11 +6,11 @@ import useNavigationControl from "../hooks/useNavigationControl";
 
 const Page3: React.FC = () => {
   const navigate = useNavigate();
-  
-  // Use specialized navigation control for Page3
-//  usePage3NavigationControl();
 
-    useNavigationControl(true);
+  // Use specialized navigation control for Page3
+  //  usePage3NavigationControl();
+
+  useNavigationControl(true);
   return (
     <Box sx={{ p: 4, maxWidth: 800, mx: "auto", mt: 4 }}>
       <Paper elevation={3} sx={{ p: 3 }}>
@@ -21,24 +21,21 @@ const Page3: React.FC = () => {
           This is the third page of the navigation test.
         </Typography>
         <Box sx={{ mt: 3, display: "flex", gap: 2 }}>
-          <Button 
-            variant="contained" 
-            color="primary" 
+          <Button
+            variant="contained"
+            color="primary"
             onClick={() => navigate("/test/page1")}
           >
             Go to Page 1
           </Button>
-          <Button 
-            variant="contained" 
-            color="primary" 
+          <Button
+            variant="contained"
+            color="primary"
             onClick={() => navigate("/test/page2")}
           >
             Go to Page 2
           </Button>
-          <Button 
-            variant="outlined" 
-            onClick={() => navigate(-1)}
-          >
+          <Button variant="outlined" onClick={() => navigate(-1)}>
             Go Back
           </Button>
         </Box>

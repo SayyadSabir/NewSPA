@@ -1,17 +1,17 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { financialDetailsApi } from '../api/financialDetailsApi';
+import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { financialDetailsApi } from "../api/financialDetailsApi";
 
 export interface ApplicantSummary {
-  'applicant-id': string;
-  'title': string;
-  'first-name': string;
-  'surname': string;
-  'middle-name': string;
+  "applicant-id": string;
+  title: string;
+  "first-name": string;
+  surname: string;
+  "middle-name": string;
 }
 
 export interface ApplicationSummary {
-  'lending-type': string;
-  'main-purpose': string;
+  "lending-type": string;
+  "main-purpose": string;
 }
 
 export interface ApplicationMetadataState {
@@ -29,13 +29,16 @@ const initialState: ApplicationMetadataState = {
 };
 
 const applicationMetadataSlice = createSlice({
-  name: 'applicationMetadata',
+  name: "applicationMetadata",
   initialState,
   reducers: {
     setApplicantSummary: (state, action: PayloadAction<ApplicantSummary[]>) => {
       state.applicantSummary = action.payload;
     },
-    setApplicationSummary: (state, action: PayloadAction<ApplicationSummary>) => {
+    setApplicationSummary: (
+      state,
+      action: PayloadAction<ApplicationSummary>
+    ) => {
       state.applicationSummary = action.payload;
     },
     clearMetadata: (state) => {
@@ -64,7 +67,8 @@ const applicationMetadataSlice = createSlice({
         financialDetailsApi.endpoints.getFinancialCommitments.matchRejected,
         (state, action) => {
           state.isLoading = false;
-          state.error = action.error.message || 'Failed to fetch application metadata';
+          state.error =
+            action.error.message || "Failed to fetch application metadata";
         }
       );
   },
