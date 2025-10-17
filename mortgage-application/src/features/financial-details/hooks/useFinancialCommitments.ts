@@ -72,17 +72,24 @@ export const useFinancialCommitments = () => {
     }
   }, [commitments]);
 
-  const handleSaveCommitments = useCallback(async () => {
+  const handleSaveCommitments = useCallback(async (forceSave = false, commitmentsToSave?: FinancialCommitment[]) => {
     try {
-      // Only save if form has been modified
-      if (formModified) {
+      // Use provided commitments or fall back to current state
+      const commitmentsData = commitmentsToSave || commitments;
+      
+      // Only save if form has been modified or forceSave is true
+      if (formModified || forceSave) {
+        console.log('Calling save API with commitments:', commitmentsData);
         await saveCommitments({
-          commitments,
+          commitments: commitmentsData,
           applicationId, // Include application ID for resume case
         }).unwrap();
         // Update initial state after successful save
-        initialCommitmentsRef.current = JSON.stringify(commitments);
+        initialCommitmentsRef.current = JSON.stringify(commitmentsData);
         setFormModified(false);
+        console.log('Save API completed successfully');
+      } else {
+        console.log('Skipping save - no changes detected');
       }
       return true;
     } catch (error) {

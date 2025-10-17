@@ -133,6 +133,8 @@ const FinancialDetailsPage: React.FC<FinancialDetailsPageProps> = ({
 
   // Handle saving and returning to overview
   const handleSaveAndReturn = async () => {
+    let shouldSave = formModified;
+    
     // Check if there's an open form that needs validation
     if (showForm || editingCommitment) {
       const formRef = showForm ? addFormRef : editFormRef;
@@ -146,27 +148,52 @@ const FinancialDetailsPage: React.FC<FinancialDetailsPageProps> = ({
       // Check if form has unsaved changes
       const hasUnsavedChanges = formRef.current?.hasUnsavedChanges();
       if (hasUnsavedChanges) {
-        setValidationError(
-          "Please save or cancel the current commitment before returning."
-        );
-        return;
+        console.log('Auto-saving form with unsaved changes...')
+        // Auto-save the form data instead of showing error
+        const formValues = formRef.current?.getFormValues();
+        console.log('Form values to save:', formValues)
+        
+        if (formValues) {
+          let updatedCommitments = [...commitments];
+          
+          // If editing, update the commitment in the array
+          if (editingCommitment) {
+            updatedCommitments = commitments.map((c) =>
+              c.id === editingCommitment.id ? (formValues as FinancialCommitment) : c
+            );
+            handleUpdateCommitment(formValues as FinancialCommitment);
+          } else {
+            // If adding new, add the commitment to the array
+            const { id, ...commitmentWithoutId } = formValues;
+            const newCommitment = {
+              ...commitmentWithoutId,
+              id: `temp-${Date.now()}`, // Temporary ID
+            } as FinancialCommitment;
+            updatedCommitments = [...commitments, newCommitment];
+            handleAddCommitment(commitmentWithoutId);
+          }
+          
+          // Mark that we need to save and pass the updated commitments
+          shouldSave = true;
+          console.log('Updated commitments to save:', updatedCommitments);
+          
+          // Save with the updated commitments array directly
+          const success = await saveCommitments(true, updatedCommitments);
+          if (success) {
+            onSaveAndReturn();
+          }
+          return; // Exit early since we already saved
+        }
       }
     }
 
     // Clear any validation errors
     setValidationError(null);
 
-    // If no changes, return without API call
-    if (!formModified) {
-      // Navigate back to overview without saving
-      if (onSaveAndReturn) {
-        onSaveAndReturn();
-      }
-      return;
-    }
-
-    const success = await saveCommitments();
-    if (success && onSaveAndReturn) {
+    console.log('Saving commitments to API...', 'Total commitments:', commitments.length);
+    // Force save even if formModified hasn't updated yet (after auto-saving form)
+    const success = await saveCommitments(shouldSave);
+    if (success) {
       onSaveAndReturn();
     }
   };
